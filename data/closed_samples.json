@@ -1,4 +1,31 @@
 {
-  "next_id": 1,
-  "closed_samples": []
+  "next_id": 7,
+  "closed_samples": [
+    {
+      "id": 5,
+      "closing_date": "2025-09-28",
+      "customer_name": "Nguyễn Văn A",
+      "sample_name": "Mẫu đất",
+      "encoding": "MĐ001",
+      "box_symbol": "BC01",
+      "weight": 0.105,
+      "moisture": 0.18,
+      "corrected_weight": 0.104811,
+      "note": "",
+      "created_at": "2025-09-28T22:11:31.327439"
+    },
+    {
+      "id": 6,
+      "closing_date": "2025-09-28",
+      "customer_name": "Nguyễn Văn A",
+      "sample_name": "Mẫu đất",
+      "encoding": "MĐ001",
+      "box_symbol": "BC02",
+      "weight": 0.11,
+      "moisture": 0.19,
+      "corrected_weight": 0.109791,
+      "note": "",
+      "created_at": "2025-09-28T22:11:31.327439"
+    }
+  ]
 }

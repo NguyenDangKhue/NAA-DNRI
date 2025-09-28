@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Chỉnh sửa mẫu chuẩn · LabManage{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+	<div class="d-flex align-items-center">
+		<a href="{{ url_for('pages.closing_standard') }}" class="btn btn-outline-secondary btn-sm me-3">
+			<i class="bi bi-arrow-left"></i> Quay lại
+		</a>
+		<h1 class="h4 mb-0">Chỉnh sửa mẫu chuẩn</h1>
+	</div>
+</div>
+
+<div class="row justify-content-center">
+	<div class="col-12 col-lg-8">
+		<div class="card shadow-sm border-0 rounded-4">
+			<div class="card-body p-4">
+				<form method="post" action="{{ url_for('pages.closing_standard_update', standard_id=standard.id) }}">
+					<div class="row g-3">
+						<div class="col-md-6">
+							<label class="form-label">Tên mẫu chuẩn</label>
+							<input type="text" name="standard_name" class="form-control" value="{{ standard.standard_name }}" required>
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">Tên box</label>
+							<input type="text" name="box_name" class="form-control" value="{{ standard.box_name }}" required>
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">Loại mẫu chuẩn</label>
+							<select name="standard_type" class="form-select" required>
+								<option value="">Chọn loại mẫu chuẩn</option>
+								<option value="certified" {% if standard.standard_type == 'certified' %}selected{% endif %}>Mẫu chuẩn có chứng nhận</option>
+								<option value="reference" {% if standard.standard_type == 'reference' %}selected{% endif %}>Mẫu chuẩn tham chiếu</option>
+								<option value="control" {% if standard.standard_type == 'control' %}selected{% endif %}>Mẫu chuẩn kiểm soát</option>
+								<option value="blank" {% if standard.standard_type == 'blank' %}selected{% endif %}>Mẫu trắng</option>
+							</select>
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">Khối lượng (g)</label>
+							<input type="number" name="weight" class="form-control" step="0.001" value="{{ standard.weight }}" required>
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">Nồng độ chuẩn</label>
+							<input type="text" name="concentration" class="form-control" value="{{ standard.concentration }}" placeholder="Ví dụ: 1000 mg/kg">
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">Độ ẩm (%)</label>
+							<input type="number" name="moisture" class="form-control" step="0.01" value="{{ standard.moisture }}">
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">Ngày hết hạn</label>
+							<input type="date" name="expiry_date" class="form-control" value="{{ standard.expiry_date }}">
+						</div>
+						<div class="col-12">
+							<label class="form-label">Ghi chú</label>
+							<textarea name="note" class="form-control" rows="3">{{ standard.note }}</textarea>
+						</div>
+					</div>
+					
+					<div class="d-flex gap-2 mt-4">
+						<button type="submit" class="btn btn-primary">
+							<i class="bi bi-check-circle"></i> Cập nhật mẫu chuẩn
+						</button>
+						<a href="{{ url_for('pages.closing_standard') }}" class="btn btn-outline-secondary">
+							<i class="bi bi-x-circle"></i> Hủy
+						</a>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}

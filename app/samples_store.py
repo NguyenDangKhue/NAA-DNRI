@@ -61,6 +61,23 @@ def create_sample(customer_id: int, sample_name: str, sample_code: str, sample_t
 	data = _read()
 	samples = data.get("samples", [])
 	
+	# Validate uniqueness within the same customer
+	sample_name = sample_name.strip()
+	sample_code = sample_code.strip()
+	
+	# Check for duplicate sample name within the same customer
+	for existing_sample in samples:
+		if (existing_sample.get("customer_id") == customer_id and 
+			existing_sample.get("sample_name", "").strip().lower() == sample_name.lower()):
+			raise ValueError(f"Tên mẫu '{sample_name}' đã tồn tại cho khách hàng này")
+	
+	# Check for duplicate sample code within the same customer
+	for existing_sample in samples:
+		if (existing_sample.get("customer_id") == customer_id and 
+			existing_sample.get("sample_code", "").strip().lower() == sample_code.lower() and
+			sample_code):  # Only check if sample_code is not empty
+			raise ValueError(f"Mã hóa mẫu '{sample_code}' đã tồn tại cho khách hàng này")
+	
 	# ID is always the next sequential number (1, 2, 3, 4...)
 	sample_id = len(samples) + 1
 	
@@ -68,8 +85,8 @@ def create_sample(customer_id: int, sample_name: str, sample_code: str, sample_t
 		"id": sample_id,
 		"received_date": datetime.now().strftime("%Y-%m-%d"),
 		"customer_id": customer_id,
-		"sample_name": sample_name.strip(),
-		"sample_code": sample_code.strip(),
+		"sample_name": sample_name,
+		"sample_code": sample_code,
 		"sample_type": sample_type.strip(),
 		"analysis_target": analysis_target.strip(),
 		"note": note.strip(),
@@ -83,11 +100,31 @@ def create_sample(customer_id: int, sample_name: str, sample_code: str, sample_t
 def update_sample(sample_id: int, customer_id: int, sample_name: str, sample_code: str, sample_type: str, analysis_target: str, note: str) -> bool:
 	data = _read()
 	found = False
+	
+	# Validate uniqueness within the same customer (excluding current sample)
+	sample_name = sample_name.strip()
+	sample_code = sample_code.strip()
+	
+	# Check for duplicate sample name within the same customer (excluding current sample)
+	for existing_sample in data.get("samples", []):
+		if (existing_sample.get("id") != sample_id and
+			existing_sample.get("customer_id") == customer_id and 
+			existing_sample.get("sample_name", "").strip().lower() == sample_name.lower()):
+			raise ValueError(f"Tên mẫu '{sample_name}' đã tồn tại cho khách hàng này")
+	
+	# Check for duplicate sample code within the same customer (excluding current sample)
+	for existing_sample in data.get("samples", []):
+		if (existing_sample.get("id") != sample_id and
+			existing_sample.get("customer_id") == customer_id and 
+			existing_sample.get("sample_code", "").strip().lower() == sample_code.lower() and
+			sample_code):  # Only check if sample_code is not empty
+			raise ValueError(f"Mã hóa mẫu '{sample_code}' đã tồn tại cho khách hàng này")
+	
 	for s in data.get("samples", []):
 		if s.get("id") == sample_id:
 			s["customer_id"] = customer_id
-			s["sample_name"] = sample_name.strip()
-			s["sample_code"] = sample_code.strip()
+			s["sample_name"] = sample_name
+			s["sample_code"] = sample_code
 			s["sample_type"] = sample_type.strip()
 			s["analysis_target"] = analysis_target.strip()
 			s["note"] = note.strip()

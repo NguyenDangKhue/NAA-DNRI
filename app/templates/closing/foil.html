@@ -15,7 +15,7 @@
 		<div class="card shadow-sm border-0 rounded-4">
 			<div class="card-body p-4">
 				<h2 class="h6">Thêm lá dò</h2>
-				<form method="post" action="#">
+				<form method="post" action="{{ url_for('pages.closing_foil_add') }}">
 					<div class="mb-3">
 						<label class="form-label">Mã lá dò</label>
 						<input type="text" name="foil_code" class="form-control" required>
@@ -34,11 +34,8 @@
 					</div>
 					<div class="mb-3">
 						<label class="form-label">Khối lượng (mg)</label>
-						<input type="number" name="weight" class="form-control" step="0.001" required>
-					</div>
-					<div class="mb-3">
-						<label class="form-label">Độ dày (μm)</label>
-						<input type="number" name="thickness" class="form-control" step="0.1">
+						<input type="number" name="weight" class="form-control" step="0.00001" required>
+						<small class="form-text text-muted">Ví dụ: 0.00347</small>
 					</div>
 					<div class="mb-3">
 						<label class="form-label">Ghi chú</label>
@@ -56,9 +53,45 @@
 				<div class="d-flex justify-content-between align-items-center mb-3">
 					<h2 class="h6 mb-0">Danh sách lá dò đã đóng</h2>
 					<div class="d-flex gap-2">
-						<button class="btn btn-outline-success btn-sm">
-							<i class="bi bi-download"></i> Xuất Excel
+						<a href="{{ url_for('pages.closing_foil_template') }}" class="btn btn-outline-info btn-sm">
+							<i class="bi bi-file-earmark-text"></i> Tải mẫu CSV
+						</a>
+						<button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#importModal">
+							<i class="bi bi-upload"></i> Import CSV
 						</button>
+						<a href="{{ url_for('pages.closing_foil_export') }}" class="btn btn-outline-success btn-sm">
+							<i class="bi bi-download"></i> Xuất Excel
+						</a>
+					</div>
+				</div>
+				
+				<!-- Filter and Pagination Controls -->
+				<div class="row mb-3">
+					<div class="col-md-6">
+						<form method="GET" class="d-flex gap-2">
+							<select name="foil_type" class="form-select form-select-sm" onchange="this.form.submit()">
+								<option value="">-- Tất cả loại lá dò --</option>
+								{% for foil_type in unique_types %}
+								<option value="{{ foil_type }}" {% if foil_type == selected_foil_type %}selected{% endif %}>
+									{{ foil_type }}
+								</option>
+								{% endfor %}
+							</select>
+							<select name="per_page" class="form-select form-select-sm" onchange="this.form.submit()">
+								<option value="10" {% if per_page == 10 %}selected{% endif %}>10/trang</option>
+								<option value="20" {% if per_page == 20 %}selected{% endif %}>20/trang</option>
+								<option value="50" {% if per_page == 50 %}selected{% endif %}>50/trang</option>
+								<option value="100" {% if per_page == 100 %}selected{% endif %}>100/trang</option>
+							</select>
+						</form>
+					</div>
+					<div class="col-md-6 text-end">
+						<small class="text-muted">
+							Hiển thị {{ foils|length }} / {{ total_count }} lá dò
+							{% if selected_foil_type %}
+								- Lọc theo: {{ selected_foil_type }}
+							{% endif %}
+						</small>
 					</div>
 				</div>
 				
@@ -68,24 +101,180 @@
 							<tr>
 								<th>Mã lá dò</th>
 								<th>Loại</th>
-								<th>Khối lượng</th>
-								<th>Độ dày</th>
+								<th>Khối lượng (mg)</th>
 								<th>Ngày đóng</th>
 								<th class="text-end">Thao tác</th>
 							</tr>
 						</thead>
 						<tbody>
-							<tr>
-								<td colspan="6" class="text-center text-muted py-4">
-									<i class="bi bi-inbox"></i><br>
-									Chưa có lá dò nào được đóng
-								</td>
-							</tr>
+							{% if foils %}
+								{% for foil in foils %}
+								<tr>
+									<td>{{ foil.foil_code }}</td>
+									<td>{{ foil.foil_type }}</td>
+									<td>{{ "%.5f"|format(foil.weight) }}</td>
+									<td>{{ foil.closing_date }}</td>
+									<td class="text-end">
+										<div class="btn-group btn-group-sm">
+											<button class="btn btn-outline-primary btn-sm edit-foil-btn" data-foil-id="{{ foil.id }}">
+												<i class="bi bi-pencil"></i>
+											</button>
+											<button class="btn btn-outline-danger btn-sm delete-foil-btn" data-foil-id="{{ foil.id }}">
+												<i class="bi bi-trash"></i>
+											</button>
+										</div>
+									</td>
+								</tr>
+								{% endfor %}
+							{% else %}
+								<tr>
+									<td colspan="5" class="text-center text-muted py-4">
+										<i class="bi bi-inbox"></i><br>
+										Chưa có lá dò nào được đóng
+									</td>
+								</tr>
+							{% endif %}
 						</tbody>
 					</table>
 				</div>
+				
+				<!-- Pagination -->
+				{% if total_pages > 1 %}
+				<nav aria-label="Pagination">
+					<ul class="pagination pagination-sm justify-content-center">
+						<!-- Previous page -->
+						{% if current_page > 1 %}
+						<li class="page-item">
+							<a class="page-link" href="?page={{ current_page - 1 }}&per_page={{ per_page }}{% if selected_foil_type %}&foil_type={{ selected_foil_type }}{% endif %}">
+								<i class="bi bi-chevron-left"></i>
+							</a>
+						</li>
+						{% else %}
+						<li class="page-item disabled">
+							<span class="page-link"><i class="bi bi-chevron-left"></i></span>
+						</li>
+						{% endif %}
+						
+						<!-- Page numbers -->
+						{% set start_page = [1, current_page - 2]|max %}
+						{% set end_page = [total_pages, current_page + 2]|min %}
+						
+						{% if start_page > 1 %}
+						<li class="page-item">
+							<a class="page-link" href="?page=1&per_page={{ per_page }}{% if selected_foil_type %}&foil_type={{ selected_foil_type }}{% endif %}">1</a>
+						</li>
+						{% if start_page > 2 %}
+						<li class="page-item disabled"><span class="page-link">...</span></li>
+						{% endif %}
+						{% endif %}
+						
+						{% for page_num in range(start_page, end_page + 1) %}
+						<li class="page-item {% if page_num == current_page %}active{% endif %}">
+							<a class="page-link" href="?page={{ page_num }}&per_page={{ per_page }}{% if selected_foil_type %}&foil_type={{ selected_foil_type }}{% endif %}">
+								{{ page_num }}
+							</a>
+						</li>
+						{% endfor %}
+						
+						{% if end_page < total_pages %}
+						{% if end_page < total_pages - 1 %}
+						<li class="page-item disabled"><span class="page-link">...</span></li>
+						{% endif %}
+						<li class="page-item">
+							<a class="page-link" href="?page={{ total_pages }}&per_page={{ per_page }}{% if selected_foil_type %}&foil_type={{ selected_foil_type }}{% endif %}">{{ total_pages }}</a>
+						</li>
+						{% endif %}
+						
+						<!-- Next page -->
+						{% if current_page < total_pages %}
+						<li class="page-item">
+							<a class="page-link" href="?page={{ current_page + 1 }}&per_page={{ per_page }}{% if selected_foil_type %}&foil_type={{ selected_foil_type }}{% endif %}">
+								<i class="bi bi-chevron-right"></i>
+							</a>
+						</li>
+						{% else %}
+						<li class="page-item disabled">
+							<span class="page-link"><i class="bi bi-chevron-right"></i></span>
+						</li>
+						{% endif %}
+					</ul>
+				</nav>
+				{% endif %}
 			</div>
 		</div>
 	</div>
 </div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="importModalLabel">
+					<i class="bi bi-upload"></i> Import lá dò từ CSV
+				</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<form method="post" action="{{ url_for('pages.closing_foil_import') }}" enctype="multipart/form-data">
+				<div class="modal-body">
+					<div class="mb-3">
+						<label for="csv_file" class="form-label">Chọn file CSV</label>
+						<input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
+						<div class="form-text">
+							<strong>Lưu ý:</strong> File CSV phải có định dạng đúng với template.
+							<a href="{{ url_for('pages.closing_foil_template') }}" class="text-decoration-none">
+								<i class="bi bi-download"></i> Tải mẫu CSV
+							</a>
+						</div>
+					</div>
+					<div class="alert alert-info">
+						<h6><i class="bi bi-info-circle"></i> Hướng dẫn:</h6>
+						<ul class="mb-0">
+							<li>Tải file mẫu CSV để xem định dạng</li>
+							<li>Điền thông tin lá dò vào file CSV (bao gồm độ dày)</li>
+							<li>Upload file CSV đã điền thông tin</li>
+							<li>Hệ thống sẽ tự động tạo các lá dò</li>
+						</ul>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+					<button type="submit" class="btn btn-primary">
+						<i class="bi bi-upload"></i> Import
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<script>
+// Add event listeners for edit and delete buttons
+document.addEventListener('click', function(e) {
+	if (e.target.closest('.edit-foil-btn')) {
+		const foilId = e.target.closest('.edit-foil-btn').getAttribute('data-foil-id');
+		editFoil(foilId);
+	}
+	
+	if (e.target.closest('.delete-foil-btn')) {
+		const foilId = e.target.closest('.delete-foil-btn').getAttribute('data-foil-id');
+		deleteFoil(foilId);
+	}
+});
+
+function editFoil(foilId) {
+	// Redirect to edit page
+	window.location.href = `{{ url_for('pages.closing_foil_edit', foil_id=0) }}`.replace('0', foilId);
+}
+
+function deleteFoil(foilId) {
+	if (confirm('Bạn có chắc chắn muốn xóa lá dò này?')) {
+		const form = document.createElement('form');
+		form.method = 'POST';
+		form.action = `{{ url_for('pages.closing_foil_delete', foil_id=0) }}`.replace('0', foilId);
+		document.body.appendChild(form);
+		form.submit();
+	}
+}
+</script>
 {% endblock %}

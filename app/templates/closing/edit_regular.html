@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}Chỉnh sửa mẫu đóng · LabManage{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+	<div class="d-flex align-items-center">
+		<a href="{{ url_for('pages.closing_regular') }}" class="btn btn-outline-secondary btn-sm me-3">
+			<i class="bi bi-arrow-left"></i> Quay lại
+		</a>
+		<h1 class="h4 mb-0">Chỉnh sửa mẫu đóng</h1>
+	</div>
+</div>
+
+<div class="row justify-content-center">
+	<div class="col-12 col-lg-8">
+		<div class="card shadow-sm border-0 rounded-4">
+			<div class="card-body p-4">
+				<h2 class="h6 mb-4">Thông tin mẫu đóng</h2>
+				<form method="post" action="{{ url_for('pages.closing_regular_update', closed_sample_id=closed_sample.id) }}">
+					<div class="row g-3">
+						<div class="col-md-6">
+							<label class="form-label">Ngày đóng mẫu</label>
+							<input type="date" name="closing_date" class="form-control" value="{{ closed_sample.closing_date }}" required>
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">Tên khách hàng</label>
+							<select name="customer_name" class="form-control" required>
+								<option value="">-- Chọn khách hàng --</option>
+								{% for customer in unique_customers %}
+								<option value="{{ customer }}" {% if customer == closed_sample.customer_name %}selected{% endif %}>
+									{{ customer }}
+								</option>
+								{% endfor %}
+							</select>
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">Tên mẫu</label>
+							<input type="text" name="sample_name" class="form-control" value="{{ closed_sample.sample_name }}" required>
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">Mã hóa</label>
+							<input type="text" name="encoding" class="form-control" value="{{ closed_sample.encoding }}">
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">Ký hiệu box</label>
+							<input type="text" name="box_symbol" class="form-control" value="{{ closed_sample.box_symbol }}" required>
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">Khối lượng cân (g)</label>
+							<input type="number" name="weight" class="form-control" step="0.001" value="{{ closed_sample.weight }}" required 
+								   oninput="calculateCorrectedWeight()">
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">Độ ẩm mẫu (%)</label>
+							<input type="number" name="moisture" class="form-control" step="0.01" value="{{ closed_sample.moisture }}" 
+								   oninput="calculateCorrectedWeight()">
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">Khối lượng hiệu chỉnh (g)</label>
+							<input type="number" name="corrected_weight" id="corrected_weight" class="form-control" step="0.001" readonly>
+							<small class="form-text text-muted">Tự động tính</small>
+						</div>
+						<div class="col-12">
+							<label class="form-label">Ghi chú</label>
+							<textarea name="note" class="form-control" rows="3">{{ closed_sample.note }}</textarea>
+						</div>
+					</div>
+					
+					<div class="d-flex gap-2 mt-4">
+						<button type="submit" class="btn btn-primary">
+							<i class="bi bi-check-circle"></i> Cập nhật mẫu đóng
+						</button>
+						<a href="{{ url_for('pages.closing_regular') }}" class="btn btn-secondary">
+							<i class="bi bi-x-circle"></i> Hủy
+						</a>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+// Auto-calculate corrected weight
+function calculateCorrectedWeight() {
+	const weightInput = document.querySelector('input[name="weight"]');
+	const moistureInput = document.querySelector('input[name="moisture"]');
+	const correctedWeightInput = document.getElementById('corrected_weight');
+	
+	if (weightInput && moistureInput && correctedWeightInput) {
+		const weight = parseFloat(weightInput.value) || 0;
+		const moisture = parseFloat(moistureInput.value) || 0;
+		const moistureWeight = weight * (moisture / 100);
+		const correctedWeight = weight - moistureWeight;
+		correctedWeightInput.value = correctedWeight.toFixed(3);
+	}
+}
+
+// Initialize form
+document.addEventListener('DOMContentLoaded', function() {
+	// Calculate corrected weight on page load
+	calculateCorrectedWeight();
+});
+</script>
+{% endblock %}

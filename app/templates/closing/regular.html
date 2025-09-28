@@ -28,15 +28,22 @@
 							</div>
 							<div class="col-12">
 								<label class="form-label">Tên khách hàng gửi mẫu</label>
-								<input type="text" name="customer_name" class="form-control" required>
+								<select name="customer_id" id="customerSelect" class="form-control" required>
+									<option value="">-- Chọn khách hàng --</option>
+								</select>
 							</div>
 							<div class="col-12">
 								<label class="form-label">Tên mẫu</label>
-								<input type="text" name="sample_name" class="form-control" required>
+								<select name="sample_id" id="sampleSelect" class="form-control" required disabled>
+									<option value="">-- Chọn mẫu --</option>
+								</select>
+								<input type="hidden" name="customer_name" id="customerNameInput">
+								<input type="hidden" name="sample_name" id="sampleNameInput">
 							</div>
 							<div class="col-12">
 								<label class="form-label">Mã hóa</label>
-								<input type="text" name="encoding" class="form-control" required>
+								<input type="text" name="encoding" id="encodingInput" class="form-control" required>
+								
 							</div>
 						</div>
 					</div>
@@ -77,9 +84,45 @@
 				<div class="d-flex justify-content-between align-items-center mb-3">
 					<h2 class="h6 mb-0">Danh sách mẫu đã đóng</h2>
 					<div class="d-flex gap-2">
+						<a href="{{ url_for('pages.closing_regular_template') }}" class="btn btn-outline-info btn-sm">
+							<i class="bi bi-file-earmark-text"></i> Tải mẫu CSV
+						</a>
+						<button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#importModal">
+							<i class="bi bi-upload"></i> Import CSV
+						</button>
 						<a href="{{ url_for('pages.closing_regular_export') }}" class="btn btn-outline-success btn-sm">
 							<i class="bi bi-download"></i> Xuất Excel
 						</a>
+					</div>
+				</div>
+				
+				<!-- Filter and Pagination Controls -->
+				<div class="row mb-3">
+					<div class="col-md-6">
+						<form method="GET" class="d-flex gap-2">
+							<select name="customer_name" class="form-select form-select-sm" onchange="this.form.submit()">
+								<option value="">-- Tất cả khách hàng --</option>
+								{% for customer in unique_customers %}
+								<option value="{{ customer }}" {% if customer == selected_customer_name %}selected{% endif %}>
+									{{ customer }}
+								</option>
+								{% endfor %}
+							</select>
+							<select name="per_page" class="form-select form-select-sm" onchange="this.form.submit()">
+								<option value="10" {% if per_page == 10 %}selected{% endif %}>10/trang</option>
+								<option value="20" {% if per_page == 20 %}selected{% endif %}>20/trang</option>
+								<option value="50" {% if per_page == 50 %}selected{% endif %}>50/trang</option>
+								<option value="100" {% if per_page == 100 %}selected{% endif %}>100/trang</option>
+							</select>
+						</form>
+					</div>
+					<div class="col-md-6 text-end">
+						<small class="text-muted">
+							Hiển thị {{ closed_samples|length }} / {{ total_count }} mẫu
+							{% if selected_customer_name %}
+								- Lọc theo: {{ selected_customer_name }}
+							{% endif %}
+						</small>
 					</div>
 				</div>
 				
@@ -133,6 +176,69 @@
 						</tbody>
 					</table>
 				</div>
+				
+				<!-- Pagination -->
+				{% if total_pages > 1 %}
+				<nav aria-label="Pagination">
+					<ul class="pagination pagination-sm justify-content-center">
+						<!-- Previous page -->
+						{% if current_page > 1 %}
+						<li class="page-item">
+							<a class="page-link" href="?page={{ current_page - 1 }}&per_page={{ per_page }}{% if selected_customer_name %}&customer_name={{ selected_customer_name }}{% endif %}">
+								<i class="bi bi-chevron-left"></i>
+							</a>
+						</li>
+						{% else %}
+						<li class="page-item disabled">
+							<span class="page-link"><i class="bi bi-chevron-left"></i></span>
+						</li>
+						{% endif %}
+						
+						<!-- Page numbers -->
+						{% set start_page = [1, current_page - 2]|max %}
+						{% set end_page = [total_pages, current_page + 2]|min %}
+						
+						{% if start_page > 1 %}
+						<li class="page-item">
+							<a class="page-link" href="?page=1&per_page={{ per_page }}{% if selected_customer_name %}&customer_name={{ selected_customer_name }}{% endif %}">1</a>
+						</li>
+						{% if start_page > 2 %}
+						<li class="page-item disabled"><span class="page-link">...</span></li>
+						{% endif %}
+						{% endif %}
+						
+						{% for page_num in range(start_page, end_page + 1) %}
+						<li class="page-item {% if page_num == current_page %}active{% endif %}">
+							<a class="page-link" href="?page={{ page_num }}&per_page={{ per_page }}{% if selected_customer_name %}&customer_name={{ selected_customer_name }}{% endif %}">
+								{{ page_num }}
+							</a>
+						</li>
+						{% endfor %}
+						
+						{% if end_page < total_pages %}
+						{% if end_page < total_pages - 1 %}
+						<li class="page-item disabled"><span class="page-link">...</span></li>
+						{% endif %}
+						<li class="page-item">
+							<a class="page-link" href="?page={{ total_pages }}&per_page={{ per_page }}{% if selected_customer_name %}&customer_name={{ selected_customer_name }}{% endif %}">{{ total_pages }}</a>
+						</li>
+						{% endif %}
+						
+						<!-- Next page -->
+						{% if current_page < total_pages %}
+						<li class="page-item">
+							<a class="page-link" href="?page={{ current_page + 1 }}&per_page={{ per_page }}{% if selected_customer_name %}&customer_name={{ selected_customer_name }}{% endif %}">
+								<i class="bi bi-chevron-right"></i>
+							</a>
+						</li>
+						{% else %}
+						<li class="page-item disabled">
+							<span class="page-link"><i class="bi bi-chevron-right"></i></span>
+						</li>
+						{% endif %}
+					</ul>
+				</nav>
+				{% endif %}
 			</div>
 		</div>
 	</div>
@@ -215,6 +321,38 @@ document.addEventListener('DOMContentLoaded', function() {
 	// Add first box automatically
 	addBox();
 	
+	// Load customers
+	loadCustomers();
+	
+	// Add event listeners
+	document.getElementById('customerSelect').addEventListener('change', function() {
+		const customerId = this.value;
+		const customerName = this.options[this.selectedIndex].text;
+		
+		// Update hidden inputs
+		document.getElementById('customerNameInput').value = customerName;
+		
+		if (customerId) {
+			loadSamplesByCustomer(customerId);
+			document.getElementById('sampleSelect').disabled = false;
+		} else {
+			document.getElementById('sampleSelect').disabled = true;
+			document.getElementById('sampleSelect').innerHTML = '<option value="">-- Chọn mẫu --</option>';
+		}
+	});
+	
+	document.getElementById('sampleSelect').addEventListener('change', function() {
+		const selectedOption = this.options[this.selectedIndex];
+		const sampleName = selectedOption.text;
+		const sampleCode = selectedOption.getAttribute('data-sample-code') || '';
+		
+		// Update hidden inputs
+		document.getElementById('sampleNameInput').value = sampleName;
+		
+		// Auto-fill encoding field with sample code
+		document.querySelector('input[name="encoding"]').value = sampleCode;
+	});
+	
 	// Update form submission to handle multiple boxes
 	document.getElementById('closingForm').addEventListener('submit', function(e) {
 		const boxes = document.querySelectorAll('.box-item');
@@ -239,9 +377,51 @@ document.addEventListener('DOMContentLoaded', function() {
 	});
 });
 
+// Load customers from API
+function loadCustomers() {
+	fetch('/api/customers')
+		.then(response => response.json())
+		.then(customers => {
+			const select = document.getElementById('customerSelect');
+			customers.forEach(customer => {
+				const option = document.createElement('option');
+				option.value = customer.id;
+				option.textContent = customer.name;
+				select.appendChild(option);
+			});
+		})
+		.catch(error => {
+			console.error('Error loading customers:', error);
+			alert('Lỗi khi tải danh sách khách hàng');
+		});
+}
+
+// Load samples by customer
+function loadSamplesByCustomer(customerId) {
+	fetch(`/api/samples-by-customer/${customerId}`)
+		.then(response => response.json())
+		.then(samples => {
+			const select = document.getElementById('sampleSelect');
+			select.innerHTML = '<option value="">-- Chọn mẫu --</option>';
+			
+			samples.forEach(sample => {
+				const option = document.createElement('option');
+				option.value = sample.id;
+				option.textContent = sample.sample_name;
+				// Store sample code as data attribute for auto-filling
+				option.setAttribute('data-sample-code', sample.sample_code || '');
+				select.appendChild(option);
+			});
+		})
+		.catch(error => {
+			console.error('Error loading samples:', error);
+			alert('Lỗi khi tải danh sách mẫu');
+		});
+}
+
 function editSample(sampleId) {
-	// TODO: Implement edit functionality
-	alert('Chức năng chỉnh sửa sẽ được triển khai');
+	// Redirect to edit page
+	window.location.href = `{{ url_for('pages.closing_regular_edit', closed_sample_id=0) }}`.replace('0', sampleId);
 }
 
 function deleteSample(sampleId) {
@@ -254,4 +434,47 @@ function deleteSample(sampleId) {
 	}
 }
 </script>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="importModalLabel">
+					<i class="bi bi-upload"></i> Import mẫu đóng từ CSV
+				</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<form method="post" action="{{ url_for('pages.closing_regular_import') }}" enctype="multipart/form-data">
+				<div class="modal-body">
+					<div class="mb-3">
+						<label for="csv_file" class="form-label">Chọn file CSV</label>
+						<input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
+						<div class="form-text">
+							<strong>Lưu ý:</strong> File CSV phải có định dạng đúng với template.
+							<a href="{{ url_for('pages.closing_regular_template') }}" class="text-decoration-none">
+								<i class="bi bi-download"></i> Tải mẫu CSV
+							</a>
+						</div>
+					</div>
+					<div class="alert alert-info">
+						<h6><i class="bi bi-info-circle"></i> Hướng dẫn:</h6>
+						<ul class="mb-0">
+							<li>Tải file mẫu CSV để xem định dạng</li>
+							<li>Điền thông tin mẫu đóng vào file CSV</li>
+							<li>Upload file CSV đã điền thông tin</li>
+							<li>Hệ thống sẽ tự động tạo các mẫu đóng</li>
+						</ul>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+					<button type="submit" class="btn btn-primary">
+						<i class="bi bi-upload"></i> Import
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
 {% endblock %}

@@ -1,0 +1,59 @@
+{
+  "next_id": 7,
+  "foils": [
+    {
+      "id": 1,
+      "foil_code": "FOIL001",
+      "foil_type": "Au",
+      "weight": 10.5,
+      "closing_date": "2025-09-28",
+      "note": "Lá dò vàng chuẩn",
+      "created_at": "2025-09-28T22:18:43.138073"
+    },
+    {
+      "id": 2,
+      "foil_code": "FOIL002",
+      "foil_type": "Co",
+      "weight": 15.2,
+      "closing_date": "2025-09-28",
+      "note": "Lá dò coban",
+      "created_at": "2025-09-28T22:18:43.139072"
+    },
+    {
+      "id": 3,
+      "foil_code": "FOIL003",
+      "foil_type": "Cu",
+      "weight": 8.75,
+      "closing_date": "2025-09-28",
+      "note": "Lá dò đồng",
+      "created_at": "2025-09-28T22:18:43.140072"
+    },
+    {
+      "id": 4,
+      "foil_code": "A245",
+      "foil_type": "Au",
+      "weight": 0.014,
+      "closing_date": "2025-09-28",
+      "note": "",
+      "created_at": "2025-09-28T22:19:27.916756"
+    },
+    {
+      "id": 5,
+      "foil_code": "A246",
+      "foil_type": "Au",
+      "weight": 0.006,
+      "closing_date": "2025-09-28",
+      "note": "",
+      "created_at": "2025-09-28T22:20:10.921789"
+    },
+    {
+      "id": 6,
+      "foil_code": "A247",
+      "foil_type": "Au",
+      "weight": 0.0239,
+      "closing_date": "2025-09-28",
+      "note": "",
+      "created_at": "2025-09-28T22:22:14.669267"
+    }
+  ]
+}
