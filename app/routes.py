@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 
 from .auth import login_required, verify_credentials, admin_required, permission_required
 from .users_store import load_users, create_user, delete_user, DEFAULT_SECTIONS
-from .customers_store import list_customers, create_customer, delete_customer, get_customer, update_customer
+from .customers_store import list_customers, create_customer, delete_customer, get_customer, update_customer, export_customers_to_excel
 from .samples_store import list_samples, list_samples_paginated, create_sample, delete_sample, get_sample, update_sample, import_samples_from_csv, export_samples_to_excel, save_filtered_samples_to_temp, load_filtered_samples_from_temp, cleanup_temp_file
 from .closed_samples_store import list_closed_samples, create_closed_sample, delete_closed_sample, export_closed_samples_to_excel
 
@@ -139,6 +139,39 @@ def customers_update(customer_id: int):
 	else:
 		flash("Cập nhật thất bại", "danger")
 	return redirect(url_for("pages.customers_list"))
+
+
+@pages.route("/customers/export")
+@permission_required("customers")
+def customers_export():
+	"""Export customers to Excel format"""
+	from flask import Response
+	from urllib.parse import quote
+	
+	try:
+		# Export customers to CSV format
+		csv_content = export_customers_to_excel()
+		
+		# Create filename with timestamp
+		from datetime import datetime
+		timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+		filename = f"danh_sach_khach_hang_{timestamp}.csv"
+		
+		# Return with proper headers for Excel compatibility
+		response = Response(
+			csv_content.encode('utf-8-sig'),  # Add BOM for Excel compatibility
+			mimetype='text/csv; charset=utf-8',
+			headers={
+				'Content-Disposition': f'attachment; filename="{filename}"; filename*=UTF-8\'\'{quote(filename)}',
+				'Content-Type': 'text/csv; charset=utf-8',
+				'Cache-Control': 'no-cache'
+			}
+		)
+		return response
+		
+	except Exception as e:
+		flash(f"Lỗi xuất dữ liệu: {str(e)}", "danger")
+		return redirect(url_for("pages.customers_list"))
 
 
 # Samples management (permission: receiving)

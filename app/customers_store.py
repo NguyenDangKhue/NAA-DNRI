@@ -1,5 +1,7 @@
 import json
 import os
+import io
+import csv
 from typing import Dict, Any, List, Optional
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
@@ -79,3 +81,28 @@ def delete_customer(customer_id: int) -> bool:
 	data["customers"] = new_customers
 	_write(data)
 	return True
+
+
+def export_customers_to_excel() -> str:
+	"""Export customers data to CSV format (Excel compatible)"""
+	customers = list_customers()
+	
+	# Create CSV content
+	output = io.StringIO()
+	writer = csv.writer(output)
+	
+	# Write header
+	writer.writerow(['ID', 'Tên khách hàng', 'Đơn vị trực thuộc', 'Số điện thoại', 'Địa chỉ', 'Ghi chú'])
+	
+	# Write data
+	for customer in customers:
+		writer.writerow([
+			customer.get('id', ''),
+			customer.get('name', ''),
+			customer.get('organization', ''),
+			customer.get('phone', ''),
+			customer.get('address', ''),
+			customer.get('note', '')
+		])
+	
+	return output.getvalue()
