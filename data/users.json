@@ -35,6 +35,71 @@
         "closing"
       ],
       "active": true
+    },
+    {
+      "username": "NHNghia",
+      "password_hash": "scrypt:32768:8:1$1dFkQgw8Bnx5OSkm$6b022503fcabbfe2c0fb670ae0647b9808ee7d65a239bbd51d1544c040f758251cf589fbcecce90957f674c9c998c24487e4828626216a734511ae4e913f6580",
+      "role": "admin",
+      "permissions": [
+        "users",
+        "customers",
+        "receiving",
+        "closing",
+        "irradiation"
+      ],
+      "active": true
+    },
+    {
+      "username": "TTANH",
+      "password_hash": "scrypt:32768:8:1$i4FMELYXXwHLWoj4$0dc88926ce635d4513aa3e7ced97a782eadfdcfd770c230e6415b2bd67b3beb3abe69e3e2bd8c3704872f0805a7d312b8f3989dd14fc18b0fb19e7a30651b38b",
+      "role": "admin",
+      "permissions": [
+        "users",
+        "customers",
+        "receiving",
+        "closing",
+        "irradiation"
+      ],
+      "active": true
+    },
+    {
+      "username": "TQTHIEN",
+      "password_hash": "scrypt:32768:8:1$0gMy4jHEyYqnNhjR$5012497848e0e922b5c7e69785df6e647be2c1d372f3637b935ae8eee687a06332fefacb9e4adce70c0112f1c0e324c11f64b00973861e0f47da23e670c25e0f",
+      "role": "admin",
+      "permissions": [
+        "users",
+        "customers",
+        "receiving",
+        "closing",
+        "irradiation"
+      ],
+      "active": true
+    },
+    {
+      "username": "TTTHUONG",
+      "password_hash": "scrypt:32768:8:1$TPWxKNNrk07Htc6p$47b8edbab2bd277de7ff75ff734679347379f1d48ef8a0a413131f7594fd522182acb94319e42a1a37fcab6481ba19130a705685ac36f691de06cc4c70c21756",
+      "role": "admin",
+      "permissions": [
+        "users",
+        "customers",
+        "receiving",
+        "closing",
+        "irradiation"
+      ],
+      "active": true
+    },
+    {
+      "username": "CTNQUYNH",
+      "password_hash": "scrypt:32768:8:1$bMQfspMhUhSbXFE2$58c1ca9324116045c3b3ad09a4be8281df4a79ef2eb3054cfd8691717f376885e9a5f0d054b5b3cf24a6a57a0ce966839c14c8a6cea3d74d7ed81715a3b6ea88",
+      "role": "admin",
+      "permissions": [
+        "users",
+        "customers",
+        "receiving",
+        "closing",
+        "irradiation"
+      ],
+      "active": true
     }
   ]
 }
