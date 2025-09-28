@@ -8,6 +8,9 @@ from .closed_samples_store import list_closed_samples, list_closed_samples_pagin
 from .foil_store import list_foils, list_foils_paginated, create_foil, delete_foil, get_foil, update_foil, export_foils_to_excel, import_foils_from_csv
 from .standard_store import list_standards, list_standards_paginated, create_standard, delete_standard, get_standard, update_standard, export_standards_to_excel, import_standards_from_csv
 from .standard_inventory_store import list_inventories, list_inventories_paginated, create_inventory, delete_inventory, get_inventory, update_inventory, upload_certificate, get_certificate_path, export_inventories_to_excel
+from .rotating_disk_store import list_rotating_disk_irradiations, list_rotating_disk_irradiations_paginated, create_rotating_disk_irradiation, delete_rotating_disk_irradiation, get_rotating_disk_irradiation, update_rotating_disk_irradiation, export_rotating_disk_irradiations_to_excel
+from .channel_7_1_store import list_channel_7_1_irradiations, list_channel_7_1_irradiations_paginated, create_channel_7_1_irradiation, delete_channel_7_1_irradiation, get_channel_7_1_irradiation, update_channel_7_1_irradiation, export_channel_7_1_irradiations_to_excel
+from .thermal_column_store import list_thermal_column_irradiations, list_thermal_column_irradiations_paginated, create_thermal_column_irradiation, delete_thermal_column_irradiation, get_thermal_column_irradiation, update_thermal_column_irradiation, export_thermal_column_irradiations_to_excel
 
 
 pages = Blueprint("pages", __name__)
@@ -1118,15 +1121,12 @@ def closing_standard_add():
 	try:
 		standard_name = request.form.get("standard_name", "").strip()
 		box_name = request.form.get("box_name", "").strip()
-		standard_type = request.form.get("standard_type", "").strip()
 		weight = float(request.form.get("weight", 0))
-		concentration = request.form.get("concentration", "").strip()
 		moisture = float(request.form.get("moisture", 0))
-		expiry_date = request.form.get("expiry_date", "").strip()
 		note = request.form.get("note", "").strip()
 		
 		# Validate required fields
-		if not standard_name or not box_name or not standard_type:
+		if not standard_name or not box_name or weight <= 0:
 			flash("Vui lòng nhập đầy đủ thông tin bắt buộc", "warning")
 			return redirect(url_for("pages.closing_standard"))
 		
@@ -1134,11 +1134,8 @@ def closing_standard_add():
 		create_standard(
 			standard_name=standard_name,
 			box_name=box_name,
-			standard_type=standard_type,
 			weight=weight,
-			concentration=concentration,
 			moisture=moisture,
-			expiry_date=expiry_date,
 			note=note
 		)
 		
@@ -1177,15 +1174,12 @@ def closing_standard_update(standard_id):
 	try:
 		standard_name = request.form.get("standard_name", "").strip()
 		box_name = request.form.get("box_name", "").strip()
-		standard_type = request.form.get("standard_type", "").strip()
 		weight = float(request.form.get("weight", 0))
-		concentration = request.form.get("concentration", "").strip()
 		moisture = float(request.form.get("moisture", 0))
-		expiry_date = request.form.get("expiry_date", "").strip()
 		note = request.form.get("note", "").strip()
 		
 		# Validate required fields
-		if not standard_name or not box_name or not standard_type:
+		if not standard_name or not box_name or weight <= 0:
 			flash("Vui lòng nhập đầy đủ thông tin bắt buộc", "warning")
 			return redirect(url_for("pages.closing_standard_edit", standard_id=standard_id))
 		
@@ -1194,11 +1188,8 @@ def closing_standard_update(standard_id):
 			standard_id=standard_id,
 			standard_name=standard_name,
 			box_name=box_name,
-			standard_type=standard_type,
 			weight=weight,
-			concentration=concentration,
 			moisture=moisture,
-			expiry_date=expiry_date,
 			note=note
 		):
 			flash("Đã cập nhật mẫu chuẩn thành công!", "success")
@@ -1351,7 +1342,6 @@ def closing_standard_inventory_add():
 		standard_name = request.form.get("standard_name", "").strip()
 		box_symbol = request.form.get("box_symbol", "").strip()
 		total_weight = float(request.form.get("total_weight", 0))
-		used_weight = float(request.form.get("used_weight", 0))
 		standard_type = request.form.get("standard_type", "").strip()
 		note = request.form.get("note", "").strip()
 		
@@ -1365,7 +1355,6 @@ def closing_standard_inventory_add():
 					standard_name=standard_name,
 					box_symbol=box_symbol,
 					total_weight=total_weight,
-					used_weight=used_weight,
 					standard_type=standard_type,
 					note=note
 				)
@@ -1382,7 +1371,6 @@ def closing_standard_inventory_add():
 			standard_name=standard_name,
 			box_symbol=box_symbol,
 			total_weight=total_weight,
-			used_weight=used_weight,
 			standard_type=standard_type,
 			note=note
 		)
@@ -1423,7 +1411,6 @@ def closing_standard_inventory_update(inventory_id):
 		standard_name = request.form.get("standard_name", "").strip()
 		box_symbol = request.form.get("box_symbol", "").strip()
 		total_weight = float(request.form.get("total_weight", 0))
-		used_weight = float(request.form.get("used_weight", 0))
 		standard_type = request.form.get("standard_type", "").strip()
 		note = request.form.get("note", "").strip()
 		
@@ -1438,7 +1425,6 @@ def closing_standard_inventory_update(inventory_id):
 			standard_name=standard_name,
 			box_symbol=box_symbol,
 			total_weight=total_weight,
-			used_weight=used_weight,
 			standard_type=standard_type,
 			note=note
 		):
@@ -1541,6 +1527,14 @@ def api_customers():
 	return jsonify(customers)
 
 
+@pages.route("/api/standard-inventory", methods=["GET"])
+@permission_required("closing")
+def api_standard_inventory():
+	"""Get all standard inventories for dropdown"""
+	inventories = list_inventories()
+	return jsonify(inventories)
+
+
 @pages.route("/api/samples-by-customer/<int:customer_id>", methods=["GET"])
 @permission_required("closing")
 def api_samples_by_customer(customer_id: int):
@@ -1548,3 +1542,216 @@ def api_samples_by_customer(customer_id: int):
 	all_samples = list_samples()
 	customer_samples = [s for s in all_samples if s.get("customer_id") == customer_id]
 	return jsonify(customer_samples)
+
+
+# Irradiation Module (permission: irradiation)
+@pages.route("/irradiation", methods=["GET"]) 
+@permission_required("irradiation")
+def irradiation_index():
+	"""Main irradiation module page with 3 sub-modules"""
+	sub_modules = [
+		("Chiếu mẫu mâm quay", "/irradiation/rotating-disk", "Quản lý chiếu mẫu trên mâm quay"),
+		("Chiếu mẫu kênh 7-1", "/irradiation/channel-7-1", "Quản lý chiếu mẫu kênh 7-1"),
+		("Chiếu mẫu cột nhiệt và 13-2", "/irradiation/thermal-column", "Quản lý chiếu mẫu cột nhiệt và 13-2")
+	]
+	return render_template("irradiation/index.html", sub_modules=sub_modules)
+
+
+@pages.route("/irradiation/rotating-disk", methods=["GET"]) 
+@permission_required("irradiation")
+def irradiation_rotating_disk():
+	"""Rotating disk irradiation management"""
+	# Get pagination parameters
+	page = int(request.args.get('page', 1))
+	per_page = int(request.args.get('per_page', 20))
+	
+	# Get paginated rotating disk irradiations
+	irradiations, total_pages, total_count = list_rotating_disk_irradiations_paginated(page, per_page)
+	
+	return render_template("irradiation/rotating_disk.html", 
+		irradiations=irradiations,
+		current_page=page,
+		total_pages=total_pages,
+		total_count=total_count,
+		per_page=per_page
+	)
+
+
+@pages.route("/irradiation/channel-7-1", methods=["GET"]) 
+@permission_required("irradiation")
+def irradiation_channel_7_1():
+	"""Channel 7-1 irradiation management"""
+	# Get pagination parameters
+	page = int(request.args.get('page', 1))
+	per_page = int(request.args.get('per_page', 20))
+	
+	# Get paginated channel 7-1 irradiations
+	irradiations, total_pages, total_count = list_channel_7_1_irradiations_paginated(page, per_page)
+	
+	return render_template("irradiation/channel_7_1.html", 
+		irradiations=irradiations,
+		current_page=page,
+		total_pages=total_pages,
+		total_count=total_count,
+		per_page=per_page
+	)
+
+
+@pages.route("/irradiation/thermal-column", methods=["GET"]) 
+@permission_required("irradiation")
+def irradiation_thermal_column():
+	"""Thermal column irradiation management"""
+	# Get pagination parameters
+	page = int(request.args.get('page', 1))
+	per_page = int(request.args.get('per_page', 20))
+	
+	# Get paginated thermal column irradiations
+	irradiations, total_pages, total_count = list_thermal_column_irradiations_paginated(page, per_page)
+	
+	return render_template("irradiation/thermal_column.html", 
+		irradiations=irradiations,
+		current_page=page,
+		total_pages=total_pages,
+		total_count=total_count,
+		per_page=per_page
+	)
+
+
+# Rotating Disk Irradiation Routes
+@pages.route("/irradiation/rotating-disk/add", methods=["POST"])
+@permission_required("irradiation")
+def irradiation_rotating_disk_add():
+	"""Add new rotating disk irradiation"""
+	sample_code = request.form.get("sample_code", "").strip()
+	sample_name = request.form.get("sample_name", "").strip()
+	disk_position = request.form.get("disk_position", "")
+	irradiation_time = request.form.get("irradiation_time", "")
+	power = request.form.get("power", "")
+	note = request.form.get("note", "").strip()
+	
+	if not all([sample_code, sample_name, disk_position, irradiation_time, power]):
+		flash("Vui lòng điền đầy đủ thông tin bắt buộc", "warning")
+		return redirect(url_for("pages.irradiation_rotating_disk"))
+	
+	try:
+		create_rotating_disk_irradiation(
+			sample_code=sample_code,
+			sample_name=sample_name,
+			disk_position=int(disk_position),
+			irradiation_time=float(irradiation_time),
+			power=float(power),
+			note=note
+		)
+		flash("Đã thêm chiếu mẫu mâm quay", "success")
+	except Exception as e:
+		flash(f"Lỗi khi thêm chiếu mẫu: {str(e)}", "danger")
+	
+	return redirect(url_for("pages.irradiation_rotating_disk"))
+
+
+@pages.route("/irradiation/rotating-disk/delete/<int:irradiation_id>", methods=["POST"])
+@permission_required("irradiation")
+def irradiation_rotating_disk_delete(irradiation_id: int):
+	"""Delete rotating disk irradiation"""
+	if delete_rotating_disk_irradiation(irradiation_id):
+		flash("Đã xóa chiếu mẫu mâm quay", "success")
+	else:
+		flash("Không tìm thấy chiếu mẫu để xóa", "danger")
+	
+	return redirect(url_for("pages.irradiation_rotating_disk"))
+
+
+# Channel 7-1 Irradiation Routes
+@pages.route("/irradiation/channel-7-1/add", methods=["POST"])
+@permission_required("irradiation")
+def irradiation_channel_7_1_add():
+	"""Add new channel 7-1 irradiation"""
+	sample_code = request.form.get("sample_code", "").strip()
+	sample_name = request.form.get("sample_name", "").strip()
+	channel_position = request.form.get("channel_position", "").strip()
+	irradiation_time = request.form.get("irradiation_time", "")
+	power = request.form.get("power", "")
+	temperature = request.form.get("temperature", "")
+	note = request.form.get("note", "").strip()
+	
+	if not all([sample_code, sample_name, channel_position, irradiation_time, power]):
+		flash("Vui lòng điền đầy đủ thông tin bắt buộc", "warning")
+		return redirect(url_for("pages.irradiation_channel_7_1"))
+	
+	try:
+		create_channel_7_1_irradiation(
+			sample_code=sample_code,
+			sample_name=sample_name,
+			channel_position=channel_position,
+			irradiation_time=float(irradiation_time),
+			power=float(power),
+			temperature=float(temperature) if temperature else None,
+			note=note
+		)
+		flash("Đã thêm chiếu mẫu kênh 7-1", "success")
+	except Exception as e:
+		flash(f"Lỗi khi thêm chiếu mẫu: {str(e)}", "danger")
+	
+	return redirect(url_for("pages.irradiation_channel_7_1"))
+
+
+@pages.route("/irradiation/channel-7-1/delete/<int:irradiation_id>", methods=["POST"])
+@permission_required("irradiation")
+def irradiation_channel_7_1_delete(irradiation_id: int):
+	"""Delete channel 7-1 irradiation"""
+	if delete_channel_7_1_irradiation(irradiation_id):
+		flash("Đã xóa chiếu mẫu kênh 7-1", "success")
+	else:
+		flash("Không tìm thấy chiếu mẫu để xóa", "danger")
+	
+	return redirect(url_for("pages.irradiation_channel_7_1"))
+
+
+# Thermal Column Irradiation Routes
+@pages.route("/irradiation/thermal-column/add", methods=["POST"])
+@permission_required("irradiation")
+def irradiation_thermal_column_add():
+	"""Add new thermal column irradiation"""
+	sample_code = request.form.get("sample_code", "").strip()
+	sample_name = request.form.get("sample_name", "").strip()
+	irradiation_type = request.form.get("irradiation_type", "").strip()
+	position = request.form.get("position", "").strip()
+	irradiation_time = request.form.get("irradiation_time", "")
+	power = request.form.get("power", "")
+	temperature = request.form.get("temperature", "")
+	pressure = request.form.get("pressure", "")
+	note = request.form.get("note", "").strip()
+	
+	if not all([sample_code, sample_name, irradiation_type, irradiation_time, power]):
+		flash("Vui lòng điền đầy đủ thông tin bắt buộc", "warning")
+		return redirect(url_for("pages.irradiation_thermal_column"))
+	
+	try:
+		create_thermal_column_irradiation(
+			sample_code=sample_code,
+			sample_name=sample_name,
+			irradiation_type=irradiation_type,
+			position=position,
+			irradiation_time=float(irradiation_time),
+			power=float(power),
+			temperature=float(temperature) if temperature else None,
+			pressure=float(pressure) if pressure else None,
+			note=note
+		)
+		flash("Đã thêm chiếu mẫu cột nhiệt và 13-2", "success")
+	except Exception as e:
+		flash(f"Lỗi khi thêm chiếu mẫu: {str(e)}", "danger")
+	
+	return redirect(url_for("pages.irradiation_thermal_column"))
+
+
+@pages.route("/irradiation/thermal-column/delete/<int:irradiation_id>", methods=["POST"])
+@permission_required("irradiation")
+def irradiation_thermal_column_delete(irradiation_id: int):
+	"""Delete thermal column irradiation"""
+	if delete_thermal_column_irradiation(irradiation_id):
+		flash("Đã xóa chiếu mẫu cột nhiệt và 13-2", "success")
+	else:
+		flash("Không tìm thấy chiếu mẫu để xóa", "danger")
+	
+	return redirect(url_for("pages.irradiation_thermal_column"))

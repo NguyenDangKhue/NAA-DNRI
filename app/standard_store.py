@@ -53,26 +53,25 @@ def list_standards_paginated(page: int = 1, per_page: int = 20, standard_type: O
 def create_standard(
 	standard_name: str,
 	box_name: str,
-	standard_type: str,
 	weight: float,
-	concentration: str = "",
 	moisture: float = 0,
-	expiry_date: str = "",
 	note: str = ""
 ) -> int:
 	"""Create a new standard record"""
 	data = _read()
 	standard_id = data["next_id"]
 	
+	# Calculate corrected weight (weight - moisture weight)
+	moisture_weight = weight * (moisture / 100) if moisture > 0 else 0
+	corrected_weight = weight - moisture_weight
+	
 	standard = {
 		"id": standard_id,
 		"standard_name": standard_name,
 		"box_name": box_name,
-		"standard_type": standard_type,
 		"weight": weight,
-		"concentration": concentration,
 		"moisture": moisture,
-		"expiry_date": expiry_date,
+		"corrected_weight": corrected_weight,
 		"closing_date": datetime.now().strftime("%Y-%m-%d"),
 		"note": note,
 		"created_at": datetime.now().isoformat()
@@ -98,24 +97,23 @@ def update_standard(
 	standard_id: int,
 	standard_name: str,
 	box_name: str,
-	standard_type: str,
 	weight: float,
-	concentration: str = "",
 	moisture: float = 0,
-	expiry_date: str = "",
 	note: str = ""
 ) -> bool:
 	"""Update an existing standard"""
 	data = _read()
 	for standard in data["standards"]:
 		if standard["id"] == standard_id:
+			# Calculate corrected weight
+			moisture_weight = weight * (moisture / 100) if moisture > 0 else 0
+			corrected_weight = weight - moisture_weight
+			
 			standard["standard_name"] = standard_name
 			standard["box_name"] = box_name
-			standard["standard_type"] = standard_type
 			standard["weight"] = weight
-			standard["concentration"] = concentration
 			standard["moisture"] = moisture
-			standard["expiry_date"] = expiry_date
+			standard["corrected_weight"] = corrected_weight
 			standard["note"] = note
 			
 			_write(data)
@@ -143,8 +141,8 @@ def export_standards_to_excel() -> str:
 	
 	# Reorder columns for better display
 	column_order = [
-		"id", "standard_name", "box_name", "standard_type", "weight", 
-		"concentration", "moisture", "expiry_date", "closing_date", "note"
+		"id", "standard_name", "box_name", "weight", "moisture", 
+		"corrected_weight", "closing_date", "note"
 	]
 	
 	# Only include columns that exist in the data
@@ -156,11 +154,9 @@ def export_standards_to_excel() -> str:
 		"id": "ID",
 		"standard_name": "Tên mẫu chuẩn",
 		"box_name": "Tên box",
-		"standard_type": "Loại mẫu chuẩn",
 		"weight": "Khối lượng (g)",
-		"concentration": "Nồng độ chuẩn",
 		"moisture": "Độ ẩm (%)",
-		"expiry_date": "Ngày hết hạn",
+		"corrected_weight": "Khối lượng hiệu chỉnh (g)",
 		"closing_date": "Ngày đóng",
 		"note": "Ghi chú"
 	}
@@ -204,12 +200,8 @@ def import_standards_from_csv(csv_content: str) -> tuple[int, List[str]]:
 		field_mapping = {
 			'Tên mẫu chuẩn': 'standard_name',
 			'Tên box': 'box_name',
-			'Loại mẫu chuẩn': 'standard_type',
 			'Khối lượng (g)': 'weight',
-			'Nồng độ chuẩn': 'concentration',
 			'Độ ẩm (%)': 'moisture',
-			'Ngày hết hạn': 'expiry_date',
-			'Ngày đóng': 'closing_date',
 			'Ghi chú': 'note'
 		}
 		
@@ -245,7 +237,7 @@ def import_standards_from_csv(csv_content: str) -> tuple[int, List[str]]:
 			row = dict(zip(mapped_header, [val.strip() for val in row_data]))
 			
 			# Validate required fields
-			if not row.get('standard_name') or not row.get('box_name') or not row.get('standard_type') or not row.get('weight'):
+			if not row.get('standard_name') or not row.get('box_name') or not row.get('weight'):
 				errors.append(f"Dòng {i}: Thiếu thông tin bắt buộc")
 				continue
 			
@@ -258,11 +250,8 @@ def import_standards_from_csv(csv_content: str) -> tuple[int, List[str]]:
 				create_standard(
 					standard_name=row['standard_name'],
 					box_name=row['box_name'],
-					standard_type=row['standard_type'],
 					weight=weight,
-					concentration=row.get('concentration', ''),
 					moisture=moisture,
-					expiry_date=row.get('expiry_date', ''),
 					note=row.get('note', '')
 				)
 				success_count += 1

@@ -1,4 +1,31 @@
 {
-  "next_id": 1,
-  "inventories": []
+  "next_id": 3,
+  "inventories": [
+    {
+      "id": 1,
+      "standard_name": "aaaa",
+      "box_symbol": "BC",
+      "total_weight": 1100.0,
+      "used_weight": 0.0,
+      "remaining_weight": 1100.0,
+      "standard_type": "thuc_vat",
+      "certificate_file": null,
+      "note": "",
+      "created_at": "2025-09-28T23:28:30.863935",
+      "updated_at": "2025-09-28T23:28:30.863935"
+    },
+    {
+      "id": 2,
+      "standard_name": "sssss",
+      "box_symbol": "AC",
+      "total_weight": 200.0,
+      "used_weight": 0.0,
+      "remaining_weight": 200.0,
+      "standard_type": "dat_da",
+      "certificate_file": null,
+      "note": "",
+      "created_at": "2025-09-28T23:28:49.690467",
+      "updated_at": "2025-09-28T23:28:49.690467"
+    }
+  ]
 }

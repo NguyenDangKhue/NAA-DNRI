@@ -1,4 +1,4 @@
-Tên mẫu chuẩn,Tên box,Loại mẫu chuẩn,Khối lượng (g),Nồng độ chuẩn,Độ ẩm (%),Ngày hết hạn,Ngày đóng,Ghi chú
-Mẫu chuẩn Au-1,BOX-AU-001,certified,1.250,1000 mg/kg,0.5,2025-12-31,2024-01-15,Mẫu chuẩn vàng có chứng nhận
-Mẫu chuẩn Co-1,BOX-CO-001,reference,0.850,500 mg/kg,0.3,2025-06-30,2024-01-15,Mẫu chuẩn coban tham chiếu
-Mẫu chuẩn Cu-1,BOX-CU-001,control,2.100,2000 mg/kg,0.8,2025-03-31,2024-01-15,Mẫu chuẩn đồng kiểm soát
+Tên mẫu chuẩn,Tên box,Khối lượng (g),Độ ẩm (%),Ghi chú
+Mẫu chuẩn Au-1,BOX-AU-001,1.250,0.5,Mẫu chuẩn vàng có chứng nhận
+Mẫu chuẩn Co-1,BOX-CO-001,0.850,0.3,Mẫu chuẩn coban tham chiếu
+Mẫu chuẩn Cu-1,BOX-CU-001,2.100,0.8,Mẫu chuẩn đồng kiểm soát

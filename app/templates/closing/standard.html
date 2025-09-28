@@ -18,37 +18,33 @@
 				<form method="post" action="{{ url_for('pages.closing_standard_add') }}">
 					<div class="mb-3">
 						<label class="form-label">Tên mẫu chuẩn</label>
-						<input type="text" name="standard_name" class="form-control" required>
+						<select name="standard_name" id="standardNameSelect" class="form-control" required>
+							<option value="">-- Chọn mẫu chuẩn --</option>
+						</select>
+						<small class="form-text text-muted">
+							<a href="{{ url_for('pages.closing_standard_inventory') }}" target="_blank" class="text-decoration-none">
+								<i class="bi bi-plus-circle"></i> Thêm mẫu chuẩn mới vào danh sách
+							</a>
+						</small>
 					</div>
 					<div class="mb-3">
 						<label class="form-label">Tên box</label>
 						<input type="text" name="box_name" class="form-control" required>
 					</div>
 					<div class="mb-3">
-						<label class="form-label">Loại mẫu chuẩn</label>
-						<select name="standard_type" class="form-select" required>
-							<option value="">Chọn loại mẫu chuẩn</option>
-							<option value="certified">Mẫu chuẩn có chứng nhận</option>
-							<option value="reference">Mẫu chuẩn tham chiếu</option>
-							<option value="control">Mẫu chuẩn kiểm soát</option>
-							<option value="blank">Mẫu trắng</option>
-						</select>
-					</div>
-					<div class="mb-3">
 						<label class="form-label">Khối lượng (g)</label>
-						<input type="number" name="weight" class="form-control" step="0.001" required>
-					</div>
-					<div class="mb-3">
-						<label class="form-label">Nồng độ chuẩn</label>
-						<input type="text" name="concentration" class="form-control" placeholder="Ví dụ: 1000 mg/kg">
+						<input type="number" name="weight" id="weightInput" class="form-control" step="0.001" required 
+							   oninput="calculateCorrectedWeight()">
 					</div>
 					<div class="mb-3">
 						<label class="form-label">Độ ẩm (%)</label>
-						<input type="number" name="moisture" class="form-control" step="0.01">
+						<input type="number" name="moisture" id="moistureInput" class="form-control" step="0.01" value="0" 
+							   oninput="calculateCorrectedWeight()">
 					</div>
 					<div class="mb-3">
-						<label class="form-label">Ngày hết hạn</label>
-						<input type="date" name="expiry_date" class="form-control">
+						<label class="form-label">Khối lượng hiệu chỉnh (g)</label>
+						<input type="number" name="corrected_weight" id="correctedWeightInput" class="form-control" step="0.001" readonly>
+						<small class="form-text text-muted">Tự động tính: Khối lượng - (Khối lượng × Độ ẩm / 100)</small>
 					</div>
 					<div class="mb-3">
 						<label class="form-label">Ghi chú</label>
@@ -87,9 +83,9 @@
 							<tr>
 								<th>Tên mẫu</th>
 								<th>Tên box</th>
-								<th>Loại</th>
-								<th>Khối lượng</th>
-								<th>Nồng độ</th>
+								<th>Khối lượng (g)</th>
+								<th>Độ ẩm (%)</th>
+								<th>Khối lượng hiệu chỉnh (g)</th>
 								<th>Ngày đóng</th>
 								<th class="text-end">Thao tác</th>
 							</tr>
@@ -100,9 +96,9 @@
 								<tr>
 									<td>{{ standard.standard_name }}</td>
 									<td>{{ standard.box_name }}</td>
-									<td>{{ standard.standard_type }}</td>
-									<td>{{ "%.3f"|format(standard.weight) }}g</td>
-									<td>{{ standard.concentration or '-' }}</td>
+									<td>{{ "%.3f"|format(standard.weight) }}</td>
+									<td>{{ "%.2f"|format(standard.moisture) }}</td>
+									<td>{{ "%.3f"|format(standard.corrected_weight) }}</td>
 									<td>{{ standard.closing_date }}</td>
 									<td class="text-end">
 										<div class="btn-group btn-group-sm">
@@ -203,5 +199,62 @@ function deleteStandard(standardId) {
 		form.submit();
 	}
 }
+
+// Load standard names from inventory
+function loadStandardNames() {
+	fetch('/api/standard-inventory')
+		.then(response => response.json())
+		.then(inventories => {
+			const select = document.getElementById('standardNameSelect');
+			select.innerHTML = '<option value="">-- Chọn mẫu chuẩn --</option>';
+			
+			inventories.forEach(inventory => {
+				const option = document.createElement('option');
+				option.value = inventory.standard_name;
+				option.textContent = inventory.standard_name;
+				// Add standard type as data attribute
+				option.setAttribute('data-standard-type', inventory.standard_type || '');
+				select.appendChild(option);
+			});
+		})
+		.catch(error => {
+			console.error('Error loading standard names:', error);
+		});
+}
+
+// Auto-fill standard type when standard name is selected
+document.getElementById('standardNameSelect').addEventListener('change', function() {
+	const selectedOption = this.options[this.selectedIndex];
+	const standardType = selectedOption.getAttribute('data-standard-type');
+	
+	// Auto-fill standard type if available
+	if (standardType) {
+		const standardTypeSelect = document.querySelector('select[name="standard_type"]');
+		if (standardTypeSelect) {
+			// Find matching option
+			for (let option of standardTypeSelect.options) {
+				if (option.value === standardType) {
+					standardTypeSelect.value = standardType;
+					break;
+				}
+			}
+		}
+	}
+});
+
+// Calculate corrected weight
+function calculateCorrectedWeight() {
+	const weight = parseFloat(document.getElementById('weightInput').value) || 0;
+	const moisture = parseFloat(document.getElementById('moistureInput').value) || 0;
+	const moistureWeight = weight * (moisture / 100);
+	const correctedWeight = weight - moistureWeight;
+	
+	document.getElementById('correctedWeightInput').value = correctedWeight.toFixed(3);
+}
+
+// Initialize form
+document.addEventListener('DOMContentLoaded', function() {
+	loadStandardNames();
+});
 </script>
 {% endblock %}

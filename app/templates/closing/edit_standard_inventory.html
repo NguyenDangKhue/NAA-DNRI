@@ -30,16 +30,15 @@
 						</div>
 						<div class="col-md-6">
 							<label class="form-label">Khối lượng đã sử dụng (g)</label>
-							<input type="number" name="used_weight" class="form-control" step="0.001" value="{{ inventory.used_weight }}" required>
+							<input type="number" name="used_weight" class="form-control" step="0.001" value="{{ inventory.used_weight }}" readonly>
+							<small class="form-text text-muted">Tự động tính từ module Đóng mẫu chuẩn</small>
 						</div>
 						<div class="col-md-6">
 							<label class="form-label">Loại mẫu chuẩn</label>
 							<select name="standard_type" class="form-select">
 								<option value="">Chọn loại mẫu chuẩn</option>
-								<option value="certified" {% if inventory.standard_type == 'certified' %}selected{% endif %}>Mẫu chuẩn có chứng nhận</option>
-								<option value="reference" {% if inventory.standard_type == 'reference' %}selected{% endif %}>Mẫu chuẩn tham chiếu</option>
-								<option value="control" {% if inventory.standard_type == 'control' %}selected{% endif %}>Mẫu chuẩn kiểm soát</option>
-								<option value="blank" {% if inventory.standard_type == 'blank' %}selected{% endif %}>Mẫu trắng</option>
+								<option value="thuc_vat" {% if inventory.standard_type == 'thuc_vat' %}selected{% endif %}>Mẫu chuẩn thực vật</option>
+								<option value="dat_da" {% if inventory.standard_type == 'dat_da' %}selected{% endif %}>Mẫu chuẩn đất đá</option>
 							</select>
 						</div>
 						<div class="col-md-6">

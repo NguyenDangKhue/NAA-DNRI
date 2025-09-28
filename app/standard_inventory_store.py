@@ -32,12 +32,37 @@ def _write(data: Dict[str, Any]) -> None:
 
 
 def list_inventories() -> List[Dict[str, Any]]:
-	"""Get all standard inventories"""
-	return _read().get("inventories", [])
+	"""Get all standard inventories with calculated used weight from standards"""
+	from app.standard_store import list_standards
+	
+	data = _read()
+	inventories = data.get("inventories", [])
+	
+	# Get all standards to calculate used weight
+	standards = list_standards()
+	
+	# Calculate used weight for each inventory
+	for inventory in inventories:
+		standard_name = inventory.get("standard_name", "")
+		used_weight = 0
+		
+		# Sum up weight from standards with matching standard_name
+		for standard in standards:
+			if standard.get("standard_name") == standard_name:
+				used_weight += standard.get("weight", 0)
+		
+		# Update used weight and calculate remaining weight
+		inventory["used_weight"] = used_weight
+		total_weight = inventory.get("total_weight", 0)
+		inventory["remaining_weight"] = total_weight - used_weight
+	
+	return inventories
 
 
 def list_inventories_paginated(page: int = 1, per_page: int = 20, standard_type: Optional[str] = None) -> tuple[List[Dict[str, Any]], int, int]:
 	"""Get paginated inventories with optional type filter. Returns (inventories, total_pages, total_count)"""
+	from app.standard_store import list_standards
+	
 	all_inventories = _read().get("inventories", [])
 	
 	# Filter by standard type if specified
@@ -53,6 +78,24 @@ def list_inventories_paginated(page: int = 1, per_page: int = 20, standard_type:
 	# Get inventories for current page
 	inventories = all_inventories[offset:offset + per_page]
 	
+	# Get all standards to calculate used weight
+	standards = list_standards()
+	
+	# Calculate used weight for each inventory
+	for inventory in inventories:
+		standard_name = inventory.get("standard_name", "")
+		used_weight = 0
+		
+		# Sum up weight from standards with matching standard_name
+		for standard in standards:
+			if standard.get("standard_name") == standard_name:
+				used_weight += standard.get("weight", 0)
+		
+		# Update used weight and calculate remaining weight
+		inventory["used_weight"] = used_weight
+		total_weight = inventory.get("total_weight", 0)
+		inventory["remaining_weight"] = total_weight - used_weight
+	
 	return inventories, total_pages, total_count
 
 
@@ -60,7 +103,6 @@ def create_inventory(
 	standard_name: str,
 	box_symbol: str,
 	total_weight: float,
-	used_weight: float = 0,
 	standard_type: str = "",
 	certificate_file: Optional[str] = None,
 	note: str = ""
@@ -68,6 +110,16 @@ def create_inventory(
 	"""Create a new standard inventory record"""
 	data = _read()
 	inventory_id = data["next_id"]
+	
+	# Calculate used weight from standards
+	from app.standard_store import list_standards
+	standards = list_standards()
+	used_weight = 0
+	
+	# Sum up weight from standards with matching standard_name
+	for standard in standards:
+		if standard.get("standard_name") == standard_name:
+			used_weight += standard.get("weight", 0)
 	
 	# Calculate remaining weight
 	remaining_weight = total_weight - used_weight
@@ -107,7 +159,6 @@ def update_inventory(
 	standard_name: str,
 	box_symbol: str,
 	total_weight: float,
-	used_weight: float = 0,
 	standard_type: str = "",
 	note: str = ""
 ) -> bool:
@@ -115,6 +166,16 @@ def update_inventory(
 	data = _read()
 	for inventory in data["inventories"]:
 		if inventory["id"] == inventory_id:
+			# Calculate used weight from standards
+			from app.standard_store import list_standards
+			standards = list_standards()
+			used_weight = 0
+			
+			# Sum up weight from standards with matching standard_name
+			for standard in standards:
+				if standard.get("standard_name") == standard_name:
+					used_weight += standard.get("weight", 0)
+			
 			# Calculate remaining weight
 			remaining_weight = total_weight - used_weight
 			
@@ -246,6 +307,18 @@ def export_inventories_to_excel() -> str:
 		"note": "Ghi chú",
 		"created_at": "Ngày tạo"
 	}
+	
+	# Convert standard_type values to Vietnamese for display
+	def convert_standard_type(value):
+		if value == "thuc_vat":
+			return "Mẫu chuẩn thực vật"
+		elif value == "dat_da":
+			return "Mẫu chuẩn đất đá"
+		return value
+	
+	# Apply conversion to standard_type column if it exists
+	if "standard_type" in df.columns:
+		df["standard_type"] = df["standard_type"].apply(convert_standard_type)
 	
 	df = df.rename(columns=column_names)
 	

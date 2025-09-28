@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Chiếu mẫu mâm quay · LabManage{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+	<div class="d-flex align-items-center">
+		<a href="{{ url_for('pages.irradiation_index') }}" class="btn btn-outline-secondary btn-sm me-3">
+			<i class="bi bi-arrow-left"></i> Quay lại
+		</a>
+		<h1 class="h4 mb-0">Chiếu mẫu mâm quay</h1>
+	</div>
+</div>
+
+<div class="row g-4">
+	<div class="col-12 col-lg-6">
+		<div class="card shadow-sm border-0 rounded-4">
+			<div class="card-body p-4">
+				<h2 class="h6">Thêm chiếu mẫu mâm quay</h2>
+				<form method="post" action="{{ url_for('pages.irradiation_rotating_disk_add') }}">
+					<div class="mb-3">
+						<label class="form-label">Mã mẫu</label>
+						<input type="text" name="sample_code" class="form-control" required>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Tên mẫu</label>
+						<input type="text" name="sample_name" class="form-control" required>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Vị trí mâm quay</label>
+						<select name="disk_position" class="form-select" required>
+							<option value="">Chọn vị trí</option>
+							<option value="1">Vị trí 1</option>
+							<option value="2">Vị trí 2</option>
+							<option value="3">Vị trí 3</option>
+							<option value="4">Vị trí 4</option>
+							<option value="5">Vị trí 5</option>
+							<option value="6">Vị trí 6</option>
+						</select>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Thời gian chiếu (phút)</label>
+						<input type="number" name="irradiation_time" class="form-control" step="0.1" required>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Công suất (kW)</label>
+						<input type="number" name="power" class="form-control" step="0.1" required>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Ghi chú</label>
+						<textarea name="note" class="form-control" rows="3"></textarea>
+					</div>
+					<button type="submit" class="btn btn-primary">Thêm chiếu mẫu</button>
+				</form>
+			</div>
+		</div>
+	</div>
+	
+	<div class="col-12 col-lg-6">
+		<div class="card shadow-sm border-0 rounded-4">
+			<div class="card-body p-4">
+				<h2 class="h6">Danh sách chiếu mẫu mâm quay</h2>
+				<div class="table-responsive">
+					<table class="table table-hover">
+						<thead>
+							<tr>
+								<th>Mã mẫu</th>
+								<th>Tên mẫu</th>
+								<th>Vị trí</th>
+								<th>Thời gian</th>
+								<th>Công suất</th>
+								<th>Thao tác</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for irradiation in irradiations %}
+							<tr>
+								<td>{{ irradiation.sample_code }}</td>
+								<td>{{ irradiation.sample_name }}</td>
+								<td>{{ irradiation.disk_position }}</td>
+								<td>{{ irradiation.irradiation_time }} phút</td>
+								<td>{{ irradiation.power }} kW</td>
+								<td>
+									<button class="btn btn-sm btn-outline-primary">Sửa</button>
+									<form method="post" action="{{ url_for('pages.irradiation_rotating_disk_delete', irradiation_id=irradiation.id) }}" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa chiếu mẫu này?')">
+										<button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
+									</form>
+								</td>
+							</tr>
+							{% else %}
+							<tr>
+								<td colspan="6" class="text-center text-muted">Chưa có dữ liệu</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
