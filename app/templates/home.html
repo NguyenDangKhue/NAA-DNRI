@@ -33,106 +33,158 @@
 	</div>
 </div>
 
-<style>
-	/* Card phối màu xanh teal, navy và trắng hiện đại */
-	.bg-section {
-		background: linear-gradient(135deg, #2ec4b6 0%, #233554 100%);
-	}
-	.card.feature-card {
-		transition: transform 0.18s cubic-bezier(.4,2,.6,1), box-shadow 0.18s;
-		border: none;
-		box-shadow: 0 2px 12px rgba(44, 62, 80, 0.08);
-	}
-	.card.feature-card:hover {
-		transform: translateY(-6px) scale(1.035);
-		box-shadow: 0 8px 32px rgba(44, 62, 80, 0.18);
-	}
-	.card.feature-card .card-body {
-		background: transparent;
-	}
-	.card.feature-card h2 {
-		color: #f8fafc;
-		font-weight: 700;
-		letter-spacing: 0.5px;
-	}
-	.card.feature-card p {
-		color: #e0f2fe !important;
-	}
-	.card.feature-card .icon-circle {
-		width: 44px;
-		height: 44px;
-		border-radius: 50%;
-		background: linear-gradient(135deg, #f8fafc 60%, #2ec4b6 100%);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		margin-bottom: 1rem;
-		box-shadow: 0 2px 8px rgba(44, 62, 80, 0.10);
-	}
-	@media (max-width: 576px) {
-		.card.feature-card .card-body {
-			padding: 1.25rem !important;
-		}
-	}
-</style>
+<!-- Module Giao việc -->
+<div class="row g-4 mt-4">
+	<div class="col-12">
+		<div class="card shadow-sm border-0 rounded-4">
+			<div class="card-header bg-success text-white">
+				<h1 class="h4 mb-0">
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+						<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+						<path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+					</svg>
+					Module Giao việc
+				</h1>
+			</div>
+			<div class="card-body p-4">
+				<!-- Thống kê nhanh -->
+				<div class="row g-3 mb-4">
+					<div class="col-md-3">
+						<div class="card bg-primary text-white">
+							<div class="card-body text-center">
+								<h5 class="card-title">{{ task_stats.total }}</h5>
+								<p class="card-text small">Tổng công việc</p>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-3">
+						<div class="card bg-warning text-white">
+							<div class="card-body text-center">
+								<h5 class="card-title">{{ task_stats.pending }}</h5>
+								<p class="card-text small">Chờ xử lý</p>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-3">
+						<div class="card bg-info text-white">
+							<div class="card-body text-center">
+								<h5 class="card-title">{{ task_stats.in_progress }}</h5>
+								<p class="card-text small">Đang xử lý</p>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-3">
+						<div class="card bg-success text-white">
+							<div class="card-body text-center">
+								<h5 class="card-title">{{ task_stats.completed }}</h5>
+								<p class="card-text small">Hoàn thành</p>
+							</div>
+						</div>
+					</div>
+				</div>
 
-<div class="row g-4">
-	{% for label, href in sections %}
-	<div class="col-12 col-sm-6 col-lg-3">
-		<a href="{{ href }}" class="text-decoration-none">
-			<div class="card feature-card h-100 rounded-4 bg-section">
-				<div class="card-body p-4 d-flex flex-column align-items-start">
-					<div class="icon-circle mb-2">
-						{% if label == "Quản lý người dùng" %}
-							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#2ec4b6" viewBox="0 0 16 16">
-								<path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
-							</svg>
-						{% elif label == "Quản lý khách hàng" %}
-							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#233554" viewBox="0 0 16 16">
-								<path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm4-3a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"/>
-								<path d="M14 14s-1-1.5-6-1.5S2 14 2 14V15h12v-1z"/>
-							</svg>
-						{% elif label == "Nhận mẫu" %}
-							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#2ec4b6" viewBox="0 0 16 16">
-								<path d="M4.5 9.5A.5.5 0 0 1 5 9h6a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H5a.5.5 0 0 1-.5-.5v-3z"/>
-								<path d="M8 1a2 2 0 0 1 2 2v2h2.5A1.5 1.5 0 0 1 14 6.5v7A1.5 1.5 0 0 1 12.5 15h-9A1.5 1.5 0 0 1 2 13.5v-7A1.5 1.5 0 0 1 3.5 5H6V3a2 2 0 0 1 2-2z"/>
-							</svg>
-						{% elif label == "Đóng mẫu" %}
-							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#233554" viewBox="0 0 16 16">
-								<path d="M2 2h12v12H2V2zm1 1v10h10V3H3zm2 2h6v6H5V5z"/>
-							</svg>
-						{% elif label == "Chiếu mẫu" %}
-							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#2ec4b6" viewBox="0 0 16 16">
-								<path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 1.5A6.5 6.5 0 1 1 1.5 8 6.5 6.5 0 0 1 8 1.5z"/>
-								<path d="M8 4a4 4 0 1 0 0 8A4 4 0 0 0 8 4z"/>
-							</svg>
+				<!-- Công việc gần đây -->
+				<div class="row">
+					<div class="col-12">
+						<h5 class="mb-3">Công việc được giao gần đây</h5>
+						{% if my_assigned_tasks %}
+						<div class="table-responsive">
+							<table class="table table-hover">
+								<thead class="table-light">
+									<tr>
+										<th>ID</th>
+										<th>Tiêu đề</th>
+										<th>Người giao</th>
+										<th>Độ ưu tiên</th>
+										<th>Trạng thái</th>
+										<th>Ngày tạo</th>
+										<th>Thao tác</th>
+									</tr>
+								</thead>
+								<tbody>
+									{% for task in my_assigned_tasks[:5] %}
+									<tr>
+										<td>
+											<a href="{{ url_for('pages.task_assignment_detail', task_id=task.id) }}" class="text-decoration-none fw-bold">
+												{{ task.id }}
+											</a>
+										</td>
+										<td>
+											<a href="{{ url_for('pages.task_assignment_detail', task_id=task.id) }}" class="text-decoration-none">
+												{{ task.title }}
+											</a>
+										</td>
+										<td>{{ task.assigned_by }}</td>
+										<td>
+											{% if task.priority == 'high' %}
+												<span class="badge bg-danger">Cao</span>
+											{% elif task.priority == 'medium' %}
+												<span class="badge bg-warning">Trung bình</span>
+											{% else %}
+												<span class="badge bg-secondary">Thấp</span>
+											{% endif %}
+										</td>
+										<td>
+											{% if task.status == 'pending' %}
+												<span class="badge bg-warning">Chờ xử lý</span>
+											{% elif task.status == 'in_progress' %}
+												<span class="badge bg-info">Đang xử lý</span>
+											{% elif task.status == 'completed' %}
+												<span class="badge bg-success">Hoàn thành</span>
+											{% elif task.status == 'cancelled' %}
+												<span class="badge bg-secondary">Đã hủy</span>
+											{% endif %}
+										</td>
+										<td>{{ task.created_at[:10] }}</td>
+										<td>
+											{% if task.status == 'pending' %}
+											<form method="POST" action="{{ url_for('pages.task_assignment_update_status', task_id=task.id) }}" class="d-inline">
+												<input type="hidden" name="status" value="in_progress">
+												<button type="submit" class="btn btn-sm btn-outline-primary">Bắt đầu</button>
+											</form>
+											{% elif task.status == 'in_progress' %}
+											<form method="POST" action="{{ url_for('pages.task_assignment_update_status', task_id=task.id) }}" class="d-inline">
+												<input type="hidden" name="status" value="completed">
+												<button type="submit" class="btn btn-sm btn-outline-success">Hoàn thành</button>
+											</form>
+											{% elif task.status == 'completed' %}
+											<a href="{{ url_for('pages.task_assignment_handover_form', task_id=task.id) }}" class="btn btn-sm btn-outline-info">
+												<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+													<path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+												</svg>
+												Bàn giao
+											</a>
+											{% endif %}
+										</td>
+									</tr>
+									{% endfor %}
+								</tbody>
+							</table>
+						</div>
+						<div class="text-center mt-3">
+							<a href="{{ url_for('pages.task_assignment_my_tasks') }}" class="btn btn-success">
+								Xem tất cả công việc của tôi
+							</a>
+							<a href="{{ url_for('pages.task_assignment_index') }}" class="btn btn-outline-success ms-2">
+								Vào module Giao việc
+							</a>
+						</div>
 						{% else %}
-							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#2ec4b6" viewBox="0 0 16 16">
-								<circle cx="8" cy="8" r="7" stroke="#233554" stroke-width="2" fill="none"/>
-								<path d="M8 4v4l3 2" stroke="#233554" stroke-width="2" fill="none"/>
+						<div class="text-center py-4">
+							<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#6c757d" class="mb-3" viewBox="0 0 16 16">
+								<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
 							</svg>
+							<p class="text-muted">Chưa có công việc nào được giao cho bạn</p>
+							<a href="{{ url_for('pages.task_assignment_index') }}" class="btn btn-success">
+								Vào module Giao việc
+							</a>
+						</div>
 						{% endif %}
 					</div>
-					<h2 class="h5 mb-2">{{ label }}</h2>
-					{% if label == "Quản lý người dùng" %}
-						<p class="small mb-0">Thêm và quản lý tài khoản người dùng</p>
-					{% elif label == "Quản lý khách hàng" %}
-						<p class="small mb-0">Quản lý thông tin khách hàng</p>
-					{% elif label == "Nhận mẫu" %}
-						<p class="small mb-0">Nhận mẫu và mã hóa mẫu</p>
-					{% elif label == "Đóng mẫu" %}
-						<p class="small mb-0">Đóng mẫu và xác định độ ẩm</p>
-					{% elif label == "Chiếu mẫu" %}
-						<p class="small mb-0">Sắp xếp mẫu chuẩn bị chiếu</p>
-					{% elif label == "Người dùng" %}
-						<p class="small mb-0">Quản lý tài khoản người dùng</p>
-					{% else %}
-						<p class="small mb-0">Xem chi tiết {{ label | lower }}</p>
-					{% endif %}
 				</div>
 			</div>
-		</a>
+		</div>
 	</div>
-	{% endfor %}
 </div>
+
 {% endblock %}

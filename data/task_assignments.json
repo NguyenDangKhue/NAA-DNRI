@@ -1,0 +1,28 @@
+{
+  "task_assignments": [
+    {
+      "id": 1,
+      "title": "Nhập thông tin mẫu PT - Công đoạn 2: Đóng mẫu",
+      "description": "Có tổng 2 mẫu",
+      "assigned_to": "Nguyễn Đăng Khuê",
+      "assigned_by": "TTANH",
+      "priority": "high",
+      "status": "pending",
+      "created_at": "2025-10-19 18:57:16",
+      "updated_at": "2025-10-19 18:58:13",
+      "due_date": null,
+      "category": null,
+      "note": null,
+      "handover_history": [
+        {
+          "from_user": "CTNQUYNH",
+          "to_user": "Nguyễn Đăng Khuê",
+          "handover_note": "",
+          "handover_date": "2025-10-19 18:58:13"
+        }
+      ],
+      "original_title": "Nhập thông tin mẫu PT",
+      "completion_note": "Đã bàn giao từ người hoàn thành"
+    }
+  ]
+}

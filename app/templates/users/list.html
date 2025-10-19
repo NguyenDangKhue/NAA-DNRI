@@ -3,6 +3,7 @@
 {% block content %}
 <h1 class="h4 mb-4">Quản lý người dùng</h1>
 <div class="row g-4">
+	{% if can_edit_users %}
 	<div class="col-12 col-lg-5">
 		<div class="card shadow-sm border-0 rounded-4">
 			<div class="card-body p-4">
@@ -26,6 +27,7 @@
 					</div>
 					<div class="mb-3" id="perm-group">
 						<label class="form-label">Phân quyền hạng mục</label>
+						<div class="form-text mb-2">Chọn quyền cho từng hạng mục: <strong>Không</strong> - <strong>Xem</strong> - <strong>Chỉnh sửa</strong></div>
 						{% set vi_labels = {
 							'users': 'Quản lý người dùng',
 							'customers': 'Quản lý khách hàng',
@@ -33,12 +35,43 @@
 							'closing': 'Đóng mẫu',
 							'irradiation': 'Chiếu mẫu'
 						} %}
-						<div class="row row-cols-2 g-2">
+						<div class="row g-3">
 							{% for section in default_sections %}
+							<div class="col-12">
+								<div class="card border-light">
+									<div class="card-body py-2">
+										<div class="row align-items-center">
+											<div class="col-md-4">
+												<label class="form-label mb-0 fw-semibold">{{ vi_labels.get(section, section) }}</label>
+											</div>
+											<div class="col-md-8">
+												<div class="btn-group w-100" role="group" data-toggle="buttons">
+													<input type="radio" class="btn-check" name="detailed_permissions_{{ section }}" id="none_{{ section }}" value="none" autocomplete="off">
+													<label class="btn btn-outline-secondary" for="none_{{ section }}">Không</label>
+													
+													<input type="radio" class="btn-check" name="detailed_permissions_{{ section }}" id="view_{{ section }}" value="view" autocomplete="off">
+													<label class="btn btn-outline-info" for="view_{{ section }}">Xem</label>
+													
+													<input type="radio" class="btn-check" name="detailed_permissions_{{ section }}" id="edit_{{ section }}" value="edit" autocomplete="off">
+													<label class="btn btn-outline-success" for="edit_{{ section }}">Chỉnh sửa</label>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							{% endfor %}
+						</div>
+					</div>
+					<div class="mb-3" id="workflow-roles-group">
+						<label class="form-label">Vai trò đảm nhận trong quy trình</label>
+						<div class="form-text mb-2">Chọn các vai trò mà người dùng có thể đảm nhận trong quy trình làm việc</div>
+						<div class="row row-cols-2 g-2">
+							{% for role_key, role_name in workflow_roles %}
 							<div class="col">
 								<div class="form-check">
-									<input class="form-check-input" type="checkbox" value="{{ section }}" name="permissions" id="perm-{{ section }}">
-									<label class="form-check-label" for="perm-{{ section }}">{{ vi_labels.get(section, section) }}</label>
+									<input class="form-check-input" type="checkbox" value="{{ role_key }}" name="workflow_roles" id="workflow-{{ role_key }}">
+									<label class="form-check-label" for="workflow-{{ role_key }}">{{ role_name }}</label>
 								</div>
 							</div>
 							{% endfor %}
@@ -49,7 +82,8 @@
 			</div>
 		</div>
 	</div>
-	<div class="col-12 col-lg-7">
+	{% endif %}
+	<div class="col-12 {% if can_edit_users %}col-lg-7{% else %}col-lg-12{% endif %}">
 		<div class="card shadow-sm border-0 rounded-4">
 			<div class="card-body p-4">
 				<h2 class="h6 mb-3">Danh sách người dùng</h2>
@@ -60,6 +94,7 @@
 								<th>Tên</th>
 								<th>Vai trò</th>
 								<th>Quyền</th>
+								<th>Vai trò quy trình</th>
 								<th class="text-end">Thao tác</th>
 							</tr>
 						</thead>
@@ -70,19 +105,84 @@
 								<td>{{ 'Quản trị viên' if u.role == 'admin' else 'Người dùng' }}</td>
 								<td class="small">
 									{% if u.role == 'admin' %}
-									Tất cả
+									<span class="text-success">Tất cả (Chỉnh sửa)</span>
 									{% else %}
-									{% set perms = (u.permissions or []) %}
-									{% for p in perms %}{{ vi_labels.get(p, p) }}{% if not loop.last %}, {% endif %}{% endfor %}
+									{% set detailed_perms = u.detailed_permissions or {} %}
+									{% if detailed_perms %}
+										{% for section in default_sections %}
+											{% set perm = detailed_perms.get(section, 'none') %}
+											{% if perm != 'none' %}
+												<div class="small mb-1">
+													<span class="fw-semibold">{{ vi_labels.get(section, section) }}:</span>
+													{% if perm == 'edit' %}
+														<span class="badge bg-success">Chỉnh sửa</span>
+													{% elif perm == 'view' %}
+														<span class="badge bg-info">Xem</span>
+													{% endif %}
+												</div>
+											{% endif %}
+										{% endfor %}
+										{% set has_any_permission = false %}
+										{% for perm in detailed_perms.values() %}
+											{% if perm != 'none' %}
+												{% set has_any_permission = true %}
+											{% endif %}
+										{% endfor %}
+										{% if not has_any_permission %}
+											<span class="text-muted">Chưa có quyền</span>
+										{% endif %}
+									{% else %}
+										<span class="text-muted">Chưa có quyền</span>
+									{% endif %}
+									{% endif %}
+								</td>
+								<td class="small">
+									{% if u.role == 'admin' %}
+									Tất cả vai trò
+									{% else %}
+									{% set workflow_roles = (u.workflow_roles or []) %}
+									{% if workflow_roles %}
+										{% for role in workflow_roles %}
+											{% for role_key, role_name in workflow_roles_list %}
+												{% if role == role_key %}{{ role_name }}{% if not loop.last %}, {% endif %}{% endif %}
+											{% endfor %}
+										{% endfor %}
+									{% else %}
+										<em class="text-muted">Chưa gán vai trò</em>
+									{% endif %}
 									{% endif %}
 								</td>
 								<td class="text-end">
-									{% if u.username != 'Admin' %}
-									<form method="post" action="{{ url_for('pages.users_delete', username=u.username) }}">
-										<button type="submit" class="btn btn-sm btn-outline-danger">Xoá</button>
-									</form>
+									{% if can_edit_users %}
+									<div class="btn-group" role="group">
+										<a href="{{ url_for('pages.users_edit', username=u.username) }}" class="btn btn-sm btn-outline-primary">
+											<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+												<path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708L9.5 10.5a.5.5 0 0 1-.5.5H6a.5.5 0 0 1-.5-.5V7.5a.5.5 0 0 1 .5-.5h3.5L12.146.146zM11.207 2L2 11.207V12h.793L12.207 2.793 11.207 2z"/>
+											</svg>
+											Sửa
+										</a>
+										{% if u.username != 'Admin' %}
+										<form method="post" action="{{ url_for('pages.users_delete', username=u.username) }}" class="d-inline">
+											<button type="submit" class="btn btn-sm btn-outline-danger" 
+												onclick="return confirm('Bạn có chắc chắn muốn xóa người dùng này?')">
+												<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+													<path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+													<path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+												</svg>
+												Xoá
+											</button>
+										</form>
+										{% else %}
+										<button class="btn btn-sm btn-outline-secondary" disabled>
+											<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+												<path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 1 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+											</svg>
+											Bảo vệ
+										</button>
+										{% endif %}
+									</div>
 									{% else %}
-									<em class="text-muted">Bảo vệ</em>
+									<span class="text-muted">Chỉ xem</span>
 									{% endif %}
 								</td>
 							</tr>
@@ -98,9 +198,18 @@
 <script>
 const roleSelect = document.getElementById('role-select');
 const permGroup = document.getElementById('perm-group');
+const workflowRolesGroup = document.getElementById('workflow-roles-group');
+
 function togglePerm() {
-	permGroup.style.display = roleSelect.value === 'admin' ? 'none' : '';
+	if (roleSelect.value === 'admin') {
+		permGroup.style.display = 'none';
+		workflowRolesGroup.style.display = 'none';
+	} else {
+		permGroup.style.display = '';
+		workflowRolesGroup.style.display = '';
+	}
 }
+
 roleSelect.addEventListener('change', togglePerm);
 window.addEventListener('DOMContentLoaded', togglePerm);
 </script>

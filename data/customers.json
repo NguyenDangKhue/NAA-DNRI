@@ -1,20 +1,20 @@
 {
-  "next_id": 3,
+  "next_id": 5,
   "customers": [
     {
-      "id": 1,
-      "name": "Nguyễn Văn A",
-      "organization": "Đại học khoa học tự nhiên Hà Nội",
+      "id": 3,
+      "name": "Anh Thắng",
+      "organization": "Phòng Nghiên cứu ứng dụng kỹ thuật hạt nhân và đồng vị",
       "phone": "0123456789",
-      "address": "1 Lê Hồng Phong",
+      "address": "1 Nguyễn Tử Lực, Phường Lâm Viên - Đà Lạt, Lâm Đồng",
       "note": ""
     },
     {
-      "id": 2,
-      "name": "Nguyễn Văn B",
-      "organization": "Đại học khoa học tự nhiên Hà Nội",
-      "phone": "0123456789",
-      "address": "2 Nguyễn Lữ",
+      "id": 4,
+      "name": "Mẫu PT liên phòng thí nghiệm",
+      "organization": "IAEA",
+      "phone": "",
+      "address": "Úc",
       "note": ""
     }
   ]

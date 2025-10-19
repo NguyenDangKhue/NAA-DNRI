@@ -1,7 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 
 from .auth import login_required, verify_credentials, admin_required, permission_required
-from .users_store import load_users, create_user, delete_user, DEFAULT_SECTIONS
+from .users_store import load_users, create_user, delete_user, DEFAULT_SECTIONS, get_workflow_roles, has_workflow_role, get_user, update_user
+from .task_assignment_store import (
+    create_task_assignment, get_task_assignment, update_task_assignment, delete_task_assignment,
+    get_tasks_by_user as get_assigned_tasks, get_tasks_assigned_by_user, handover_task,
+    get_task_statistics, get_tasks_paginated, search_tasks, export_task_assignments_to_excel
+)
 from .customers_store import list_customers, create_customer, delete_customer, get_customer, update_customer, export_customers_to_excel
 from .samples_store import list_samples, list_samples_paginated, create_sample, delete_sample, get_sample, update_sample, import_samples_from_csv, export_samples_to_excel, save_filtered_samples_to_temp, load_filtered_samples_from_temp, cleanup_temp_file
 from .closed_samples_store import list_closed_samples, list_closed_samples_paginated, create_closed_sample, delete_closed_sample, export_closed_samples_to_excel, import_closed_samples_from_csv
@@ -19,14 +24,17 @@ pages = Blueprint("pages", __name__)
 @pages.route("/", methods=["GET"])
 @login_required
 def index():
-	sections = [
-		("Quản lý người dùng", "/users"),
-		("Quản lý khách hàng", "/customers"),
-		("Nhận mẫu", "/receiving"),
-		("Đóng mẫu", "/closing"),
-		("Chiếu mẫu", "/irradiation"),
-	]
-	return render_template("home.html", sections=sections, username=session.get("username"))
+	username = session.get("username")
+	
+	# Lấy công việc từ module Giao việc
+	my_assigned_tasks = get_assigned_tasks(username)
+	task_stats = get_task_statistics(username)
+	
+	return render_template("home.html", 
+		username=username,
+		my_assigned_tasks=my_assigned_tasks,
+		task_stats=task_stats
+	)
 
 
 @pages.route("/login", methods=["GET", "POST"])
@@ -48,27 +56,65 @@ def logout():
 	return redirect(url_for("pages.login"))
 
 
-# Users management (admin only)
+# Users management (permission: users)
 @pages.route("/users", methods=["GET"]) 
-@admin_required
+@permission_required("users")
 def users_list():
+	username = session.get("username")
 	users = load_users()
-	return render_template("users/list.html", users=users, default_sections=DEFAULT_SECTIONS)
+	workflow_roles = get_workflow_roles()
+	
+	# Kiểm tra quyền chi tiết của người dùng hiện tại
+	from .users_store import has_detailed_permission
+	can_edit_users = has_detailed_permission(username, "users", "edit")
+	
+	return render_template("users/list.html", 
+		users=users, 
+		default_sections=DEFAULT_SECTIONS, 
+		workflow_roles=workflow_roles, 
+		workflow_roles_list=workflow_roles,
+		can_edit_users=can_edit_users
+	)
 
 
 @pages.route("/users/create", methods=["POST"]) 
-@admin_required
+@permission_required("users")
 def users_create():
+	current_user = session.get("username")
+	
+	# Kiểm tra quyền chi tiết
+	from .users_store import has_detailed_permission
+	if not has_detailed_permission(current_user, "users", "edit"):
+		flash("Bạn không có quyền tạo người dùng", "danger")
+		return redirect(url_for("pages.users_list"))
+	
 	username = request.form.get("username", "").strip()
 	password = request.form.get("password", "").strip()
 	role = request.form.get("role", "user")
-	permissions = request.form.getlist("permissions") or []
+	workflow_roles = request.form.getlist("workflow_roles") or []
+	
+	# Xử lý detailed_permissions
+	detailed_permissions = {}
+	permissions = []
+	
 	if role == "admin":
+		# Admin có tất cả quyền
+		detailed_permissions = {section: "edit" for section in DEFAULT_SECTIONS}
 		permissions = DEFAULT_SECTIONS
+		workflow_roles = [role[0] for role in get_workflow_roles()]
+	else:
+		# Xử lý quyền chi tiết cho user thường
+		for section in DEFAULT_SECTIONS:
+			permission_value = request.form.get(f"detailed_permissions_{section}", "none")
+			detailed_permissions[section] = permission_value
+			if permission_value in ["view", "edit"]:
+				permissions.append(section)
+	
 	if not username or not password:
 		flash("Vui lòng nhập tên đăng nhập và mật khẩu", "warning")
 		return redirect(url_for("pages.users_list"))
-	if create_user(username, password, role, permissions):
+	
+	if create_user(username, password, role, permissions, workflow_roles, detailed_permissions):
 		flash("Tạo người dùng thành công", "success")
 	else:
 		flash("Tên đăng nhập đã tồn tại hoặc không hợp lệ", "danger")
@@ -76,12 +122,101 @@ def users_create():
 
 
 @pages.route("/users/delete/<username>", methods=["POST"]) 
-@admin_required
+@permission_required("users")
 def users_delete(username: str):
+	current_user = session.get("username")
+	
+	# Kiểm tra quyền chi tiết
+	from .users_store import has_detailed_permission
+	if not has_detailed_permission(current_user, "users", "edit"):
+		flash("Bạn không có quyền xóa người dùng", "danger")
+		return redirect(url_for("pages.users_list"))
 	if delete_user(username):
 		flash("Đã xoá người dùng", "success")
 	else:
 		flash("Không thể xoá người dùng này", "danger")
+	return redirect(url_for("pages.users_list"))
+
+
+@pages.route("/users/edit/<username>", methods=["GET"]) 
+@permission_required("users")
+def users_edit(username: str):
+	current_user = session.get("username")
+	
+	# Kiểm tra quyền chi tiết
+	from .users_store import has_detailed_permission
+	if not has_detailed_permission(current_user, "users", "edit"):
+		flash("Bạn không có quyền chỉnh sửa người dùng", "danger")
+		return redirect(url_for("pages.users_list"))
+	user = get_user(username)
+	if not user:
+		flash("Không tìm thấy người dùng", "danger")
+		return redirect(url_for("pages.users_list"))
+	
+	workflow_roles = get_workflow_roles()
+	can_edit_users = has_detailed_permission(current_user, "users", "edit")
+	return render_template("users/edit.html", 
+		user=user, 
+		default_sections=DEFAULT_SECTIONS, 
+		workflow_roles=workflow_roles,
+		can_edit_users=can_edit_users
+	)
+
+
+@pages.route("/users/edit/<username>", methods=["POST"]) 
+@permission_required("users")
+def users_update(username: str):
+	current_user = session.get("username")
+	
+	# Kiểm tra quyền chi tiết
+	from .users_store import has_detailed_permission
+	if not has_detailed_permission(current_user, "users", "edit"):
+		flash("Bạn không có quyền chỉnh sửa người dùng", "danger")
+		return redirect(url_for("pages.users_list"))
+	user = get_user(username)
+	if not user:
+		flash("Không tìm thấy người dùng", "danger")
+		return redirect(url_for("pages.users_list"))
+	
+	# Lấy dữ liệu từ form
+	password = request.form.get("password", "").strip()
+	role = request.form.get("role", "user")
+	workflow_roles = request.form.getlist("workflow_roles") or []
+	
+	# Xử lý detailed_permissions
+	detailed_permissions = {}
+	permissions = []
+	
+	if role == "admin":
+		# Admin có tất cả quyền
+		detailed_permissions = {section: "edit" for section in DEFAULT_SECTIONS}
+		permissions = DEFAULT_SECTIONS
+		workflow_roles = [role[0] for role in get_workflow_roles()]
+	else:
+		# Xử lý quyền chi tiết cho user thường
+		for section in DEFAULT_SECTIONS:
+			permission_value = request.form.get(f"detailed_permissions_{section}", "none")
+			detailed_permissions[section] = permission_value
+			if permission_value in ["view", "edit"]:
+				permissions.append(section)
+	
+	# Cập nhật thông tin
+	update_data = {
+		"role": role,
+		"permissions": permissions,
+		"workflow_roles": workflow_roles,
+		"detailed_permissions": detailed_permissions
+	}
+	
+	# Chỉ cập nhật mật khẩu nếu có nhập
+	if password:
+		update_data["password"] = password
+	
+	if update_user(username, **update_data):
+		flash("Đã cập nhật người dùng thành công", "success")
+	else:
+		flash("Lỗi khi cập nhật người dùng", "danger")
+	
 	return redirect(url_for("pages.users_list"))
 
 
@@ -1745,13 +1880,402 @@ def irradiation_thermal_column_add():
 	return redirect(url_for("pages.irradiation_thermal_column"))
 
 
-@pages.route("/irradiation/thermal-column/delete/<int:irradiation_id>", methods=["POST"])
-@permission_required("irradiation")
-def irradiation_thermal_column_delete(irradiation_id: int):
-	"""Delete thermal column irradiation"""
-	if delete_thermal_column_irradiation(irradiation_id):
-		flash("Đã xóa chiếu mẫu cột nhiệt và 13-2", "success")
-	else:
-		flash("Không tìm thấy chiếu mẫu để xóa", "danger")
+# Task Assignment Module (permission: task_assignment)
+@pages.route("/task-assignment", methods=["GET"]) 
+@permission_required("task_assignment")
+def task_assignment_index():
+	"""Trang chính module Giao việc"""
+	username = session.get("username")
 	
-	return redirect(url_for("pages.irradiation_thermal_column"))
+	# Lấy thống kê
+	stats = get_task_statistics(username)
+	
+	# Lấy danh sách công việc gần đây
+	recent_tasks, _, _ = get_tasks_paginated(page=1, per_page=5, assigned_to=username)
+	
+	return render_template("task_assignment/index.html", 
+		username=username,
+		stats=stats,
+		recent_tasks=recent_tasks
+	)
+
+
+@pages.route("/task-assignment/list", methods=["GET"]) 
+@permission_required("task_assignment")
+def task_assignment_list():
+	"""Danh sách tất cả công việc"""
+	# Lấy tham số phân trang và lọc
+	page = int(request.args.get('page', 1))
+	per_page = int(request.args.get('per_page', 20))
+	status = request.args.get('status', '')
+	priority = request.args.get('priority', '')
+	assigned_to = request.args.get('assigned_to', '')
+	search_query = request.args.get('search', '')
+	
+	# Lấy danh sách người dùng để hiển thị trong dropdown
+	all_users = load_users()
+	
+	# Lấy danh sách công việc
+	if search_query:
+		tasks = search_tasks(search_query)
+		total_pages = 1
+		total_count = len(tasks)
+	else:
+		tasks, total_pages, total_count = get_tasks_paginated(page, per_page, status, priority, assigned_to)
+	
+	return render_template("task_assignment/list.html", 
+		tasks=tasks,
+		all_users=all_users,
+		current_page=page,
+		total_pages=total_pages,
+		total_count=total_count,
+		per_page=per_page,
+		selected_status=status,
+		selected_priority=priority,
+		selected_assigned_to=assigned_to,
+		search_query=search_query
+	)
+
+
+@pages.route("/task-assignment/my-tasks", methods=["GET"]) 
+@permission_required("task_assignment")
+def task_assignment_my_tasks():
+	"""Công việc của tôi"""
+	username = session.get("username")
+	
+	# Lấy tham số phân trang và lọc
+	page = int(request.args.get('page', 1))
+	per_page = int(request.args.get('per_page', 20))
+	status = request.args.get('status', '')
+	priority = request.args.get('priority', '')
+	search_query = request.args.get('search', '')
+	
+	# Lấy danh sách công việc của người dùng
+	if search_query:
+		tasks = search_tasks(search_query, username)
+		total_pages = 1
+		total_count = len(tasks)
+	else:
+		tasks, total_pages, total_count = get_tasks_paginated(page, per_page, status, priority, username)
+	
+	# Lấy thống kê cá nhân
+	stats = get_task_statistics(username)
+	
+	return render_template("task_assignment/my_tasks.html", 
+		tasks=tasks,
+		username=username,
+		stats=stats,
+		current_page=page,
+		total_pages=total_pages,
+		total_count=total_count,
+		per_page=per_page,
+		selected_status=status,
+		selected_priority=priority,
+		search_query=search_query
+	)
+
+
+@pages.route("/task-assignment/create", methods=["GET"]) 
+@permission_required("task_assignment")
+def task_assignment_create_form():
+	"""Form tạo công việc mới"""
+	all_users = load_users()
+	return render_template("task_assignment/create.html", all_users=all_users)
+
+
+@pages.route("/task-assignment/create", methods=["POST"]) 
+@permission_required("task_assignment")
+def task_assignment_create():
+	"""Tạo công việc mới"""
+	username = session.get("username")
+	
+	title = request.form.get("title", "").strip()
+	description = request.form.get("description", "").strip()
+	assigned_to = request.form.get("assigned_to", "").strip()
+	priority = request.form.get("priority", "medium")
+	due_date = request.form.get("due_date", "")
+	category = request.form.get("category", "").strip()
+	note = request.form.get("note", "").strip()
+	
+	if not all([title, description, assigned_to]):
+		flash("Vui lòng điền đầy đủ thông tin bắt buộc", "warning")
+		return redirect(url_for("pages.task_assignment_create_form"))
+	
+	if create_task_assignment(
+		title=title,
+		description=description,
+		assigned_to=assigned_to,
+		assigned_by=username,
+		priority=priority,
+		due_date=due_date if due_date else None,
+		category=category if category else None,
+		note=note if note else None
+	):
+		flash("Đã tạo công việc thành công", "success")
+		return redirect(url_for("pages.task_assignment_list"))
+	else:
+		flash("Lỗi khi tạo công việc", "danger")
+		return redirect(url_for("pages.task_assignment_create_form"))
+
+
+@pages.route("/task-assignment/<int:task_id>/edit", methods=["GET"]) 
+@permission_required("task_assignment")
+def task_assignment_edit_form(task_id):
+	"""Form chỉnh sửa công việc"""
+	task = get_task_assignment(task_id)
+	if not task:
+		flash("Không tìm thấy công việc", "danger")
+		return redirect(url_for("pages.task_assignment_list"))
+	
+	all_users = load_users()
+	return render_template("task_assignment/edit.html", task=task, all_users=all_users)
+
+
+@pages.route("/task-assignment/<int:task_id>/edit", methods=["POST"]) 
+@permission_required("task_assignment")
+def task_assignment_edit(task_id):
+	"""Cập nhật công việc"""
+	task = get_task_assignment(task_id)
+	if not task:
+		flash("Không tìm thấy công việc", "danger")
+		return redirect(url_for("pages.task_assignment_list"))
+	
+	title = request.form.get("title", "").strip()
+	description = request.form.get("description", "").strip()
+	assigned_to = request.form.get("assigned_to", "").strip()
+	priority = request.form.get("priority", "medium")
+	status = request.form.get("status", "pending")
+	due_date = request.form.get("due_date", "")
+	category = request.form.get("category", "").strip()
+	note = request.form.get("note", "").strip()
+	
+	if not all([title, description, assigned_to]):
+		flash("Vui lòng điền đầy đủ thông tin bắt buộc", "warning")
+		return redirect(url_for("pages.task_assignment_edit_form", task_id=task_id))
+	
+	if update_task_assignment(
+		task_id=task_id,
+		title=title,
+		description=description,
+		assigned_to=assigned_to,
+		priority=priority,
+		status=status,
+		due_date=due_date if due_date else None,
+		category=category if category else None,
+		note=note if note else None
+	):
+		flash("Đã cập nhật công việc thành công", "success")
+	else:
+		flash("Lỗi khi cập nhật công việc", "danger")
+	
+	return redirect(url_for("pages.task_assignment_list"))
+
+
+@pages.route("/task-assignment/<int:task_id>/delete", methods=["POST"]) 
+@permission_required("task_assignment")
+def task_assignment_delete(task_id):
+	"""Xóa công việc"""
+	if delete_task_assignment(task_id):
+		flash("Đã xóa công việc thành công", "success")
+	else:
+		flash("Không tìm thấy công việc để xóa", "danger")
+	
+	return redirect(url_for("pages.task_assignment_list"))
+
+
+@pages.route("/task-assignment/<int:task_id>/handover", methods=["GET"]) 
+@permission_required("task_assignment")
+def task_assignment_handover_form(task_id):
+	"""Form bàn giao công việc"""
+	task = get_task_assignment(task_id)
+	if not task:
+		flash("Không tìm thấy công việc", "danger")
+		return redirect(url_for("pages.task_assignment_list"))
+	
+	username = session.get("username")
+	if task.get("assigned_to") != username:
+		flash("Bạn không có quyền bàn giao công việc này", "danger")
+		return redirect(url_for("pages.task_assignment_list"))
+	
+	all_users = load_users()
+	return render_template("task_assignment/handover.html", task=task, all_users=all_users)
+
+
+@pages.route("/task-assignment/<int:task_id>/handover", methods=["POST"]) 
+@permission_required("task_assignment")
+def task_assignment_handover(task_id):
+	"""Bàn giao công việc"""
+	username = session.get("username")
+	to_user = request.form.get("to_user", "").strip()
+	handover_note = request.form.get("handover_note", "").strip()
+	
+	if not to_user:
+		flash("Vui lòng chọn người nhận bàn giao", "warning")
+		return redirect(url_for("pages.task_assignment_handover_form", task_id=task_id))
+	
+	if to_user == username:
+		flash("Không thể bàn giao cho chính mình", "warning")
+		return redirect(url_for("pages.task_assignment_handover_form", task_id=task_id))
+	
+	if handover_task(task_id, username, to_user, handover_note):
+		flash("Đã bàn giao công việc thành công", "success")
+		return redirect(url_for("pages.task_assignment_my_tasks"))
+	else:
+		flash("Lỗi khi bàn giao công việc", "danger")
+		return redirect(url_for("pages.task_assignment_handover_form", task_id=task_id))
+
+
+@pages.route("/task-assignment/<int:task_id>/detail", methods=["GET"]) 
+@permission_required("task_assignment")
+def task_assignment_detail(task_id):
+	"""Chi tiết công việc với sơ đồ công việc"""
+	task = get_task_assignment(task_id)
+	if not task:
+		flash("Không tìm thấy công việc", "danger")
+		return redirect(url_for("pages.task_assignment_list"))
+	
+	# Lấy danh sách người dùng để hiển thị tên
+	all_users = load_users()
+	user_names = {user["username"]: user["username"] for user in all_users}
+	
+	# Chuẩn bị dữ liệu cho sơ đồ công việc
+	workflow_stages = ["Nhận mẫu", "Đóng mẫu", "Chiếu mẫu", "Kiểm tra", "Hoàn thiện"]
+	handover_history = task.get("handover_history", [])
+	
+	# Tạo timeline cho sơ đồ
+	timeline = []
+	
+	# Thêm bước đầu tiên (người giao ban đầu)
+	timeline.append({
+		"stage": "Khởi tạo",
+		"user": task.get("assigned_by", "Unknown"),
+		"date": task.get("created_at", ""),
+		"status": "completed",
+		"note": "Công việc được tạo"
+	})
+	
+	# Thêm các bước bàn giao
+	for i, handover in enumerate(handover_history):
+		stage_name = workflow_stages[i] if i < len(workflow_stages) else f"Công đoạn {i+1}"
+		timeline.append({
+			"stage": stage_name,
+			"user": handover.get("from_user", "Unknown"),
+			"date": handover.get("handover_date", ""),
+			"status": "completed",
+			"note": handover.get("handover_note", ""),
+			"handover_to": handover.get("to_user", "Unknown")
+		})
+	
+	# Thêm bước hiện tại
+	current_stage_index = len(handover_history)
+	current_stage = workflow_stages[current_stage_index] if current_stage_index < len(workflow_stages) else f"Công đoạn {current_stage_index + 1}"
+	timeline.append({
+		"stage": current_stage,
+		"user": task.get("assigned_to", "Unknown"),
+		"date": task.get("updated_at", ""),
+		"status": task.get("status", "pending"),
+		"note": "Đang xử lý",
+		"is_current": True
+	})
+	
+	return render_template("task_assignment/detail.html", 
+		task=task,
+		timeline=timeline,
+		user_names=user_names
+	)
+
+
+@pages.route("/task-assignment/<int:task_id>/status", methods=["POST"]) 
+@permission_required("task_assignment")
+def task_assignment_update_status(task_id):
+	"""Cập nhật trạng thái công việc"""
+	username = session.get("username")
+	status = request.form.get("status", "").strip()
+	
+	if not status:
+		flash("Trạng thái không hợp lệ", "danger")
+		return redirect(url_for("pages.task_assignment_list"))
+	
+	task = get_task_assignment(task_id)
+	if not task:
+		flash("Không tìm thấy công việc", "danger")
+		return redirect(url_for("pages.task_assignment_list"))
+	
+	# Kiểm tra quyền cập nhật (chỉ người được giao việc mới có thể cập nhật trạng thái)
+	if task.get("assigned_to") != username:
+		flash("Bạn không có quyền cập nhật công việc này", "danger")
+		return redirect(url_for("pages.task_assignment_list"))
+	
+	if update_task_assignment(task_id, status=status):
+		flash("Đã cập nhật trạng thái công việc", "success")
+	else:
+		flash("Lỗi khi cập nhật công việc", "danger")
+	
+	return redirect(url_for("pages.task_assignment_my_tasks"))
+
+
+@pages.route("/task-assignment/export")
+@permission_required("task_assignment")
+def task_assignment_export():
+	"""Xuất danh sách công việc ra Excel"""
+	from flask import Response
+	from urllib.parse import quote
+	
+	try:
+		# Xuất công việc ra CSV format
+		csv_content = export_task_assignments_to_excel()
+		
+		# Tạo filename với timestamp
+		from datetime import datetime
+		timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+		filename = f"danh_sach_giao_viec_{timestamp}.csv"
+		
+		# Return với proper headers cho Excel compatibility
+		response = Response(
+			csv_content.encode('utf-8-sig'),  # Add BOM for Excel compatibility
+			mimetype='text/csv; charset=utf-8',
+			headers={
+				'Content-Disposition': f'attachment; filename="{filename}"; filename*=UTF-8\'\'{quote(filename)}',
+				'Content-Type': 'text/csv; charset=utf-8',
+				'Cache-Control': 'no-cache'
+			}
+		)
+		return response
+		
+	except Exception as e:
+		flash(f"Lỗi xuất dữ liệu: {str(e)}", "danger")
+		return redirect(url_for("pages.task_assignment_list"))
+
+
+@pages.route("/task-assignment/my-tasks/export")
+@permission_required("task_assignment")
+def task_assignment_my_tasks_export():
+	"""Xuất công việc của tôi ra Excel"""
+	from flask import Response
+	from urllib.parse import quote
+	
+	try:
+		username = session.get("username")
+		# Xuất công việc của người dùng hiện tại
+		csv_content = export_task_assignments_to_excel(username)
+		
+		# Tạo filename với timestamp
+		from datetime import datetime
+		timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+		filename = f"cong_viec_cua_toi_{username}_{timestamp}.csv"
+		
+		# Return với proper headers cho Excel compatibility
+		response = Response(
+			csv_content.encode('utf-8-sig'),  # Add BOM for Excel compatibility
+			mimetype='text/csv; charset=utf-8',
+			headers={
+				'Content-Disposition': f'attachment; filename="{filename}"; filename*=UTF-8\'\'{quote(filename)}',
+				'Content-Type': 'text/csv; charset=utf-8',
+				'Cache-Control': 'no-cache'
+			}
+		)
+		return response
+		
+	except Exception as e:
+		flash(f"Lỗi xuất dữ liệu: {str(e)}", "danger")
+		return redirect(url_for("pages.task_assignment_my_tasks"))

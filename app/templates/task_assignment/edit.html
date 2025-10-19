@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}Chỉnh sửa công việc · LabManage{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+	<div class="fw-semibold text-primary-emphasis" style="font-size: 1.05rem;">
+		<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#2ec4b6" class="me-1 mb-1" viewBox="0 0 16 16">
+			<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+		</svg>
+		Chỉnh sửa công việc #{{ task.id }}
+	</div>
+	<div>
+		<a href="{{ url_for('pages.task_assignment_list') }}" class="btn btn-outline-secondary">
+			<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+				<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+			</svg>
+			Quay lại danh sách
+		</a>
+	</div>
+</div>
+
+<div class="row justify-content-center">
+	<div class="col-lg-8">
+		<div class="card shadow-sm border-0 rounded-4">
+			<div class="card-header bg-primary text-white">
+				<h5 class="mb-0">
+					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+						<path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+					</svg>
+					Thông tin công việc
+				</h5>
+			</div>
+			<div class="card-body p-4">
+				<form method="POST" action="{{ url_for('pages.task_assignment_edit', task_id=task.id) }}">
+					<div class="row g-3">
+						<div class="col-12">
+							<label class="form-label">Tiêu đề công việc <span class="text-danger">*</span></label>
+							<input type="text" name="title" class="form-control" value="{{ task.title }}" required>
+						</div>
+						
+						<div class="col-12">
+							<label class="form-label">Mô tả chi tiết <span class="text-danger">*</span></label>
+							<textarea name="description" class="form-control" rows="4" required>{{ task.description }}</textarea>
+						</div>
+						
+						<div class="col-md-6">
+							<label class="form-label">Người được giao <span class="text-danger">*</span></label>
+							<select name="assigned_to" class="form-select" required>
+								<option value="">-- Chọn người được giao --</option>
+								{% for user in all_users %}
+								<option value="{{ user.username }}" {% if user.username == task.assigned_to %}selected{% endif %}>
+									{{ user.username }}
+								</option>
+								{% endfor %}
+							</select>
+						</div>
+						
+						<div class="col-md-6">
+							<label class="form-label">Trạng thái</label>
+							<select name="status" class="form-select">
+								<option value="pending" {% if task.status == 'pending' %}selected{% endif %}>Chờ xử lý</option>
+								<option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>Đang xử lý</option>
+								<option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Hoàn thành</option>
+								<option value="cancelled" {% if task.status == 'cancelled' %}selected{% endif %}>Đã hủy</option>
+							</select>
+						</div>
+						
+						<div class="col-md-6">
+							<label class="form-label">Độ ưu tiên</label>
+							<select name="priority" class="form-select">
+								<option value="low" {% if task.priority == 'low' %}selected{% endif %}>Thấp</option>
+								<option value="medium" {% if task.priority == 'medium' %}selected{% endif %}>Trung bình</option>
+								<option value="high" {% if task.priority == 'high' %}selected{% endif %}>Cao</option>
+							</select>
+						</div>
+						
+						<div class="col-md-6">
+							<label class="form-label">Hạn hoàn thành</label>
+							<input type="date" name="due_date" class="form-control" value="{{ task.due_date or '' }}">
+							<div class="form-text">Để trống nếu không có hạn cụ thể</div>
+						</div>
+						
+						<div class="col-md-6">
+							<label class="form-label">Danh mục</label>
+							<input type="text" name="category" class="form-control" value="{{ task.category or '' }}" placeholder="Ví dụ: Phân tích, Kiểm tra, Báo cáo...">
+						</div>
+						
+						<div class="col-md-6">
+							<label class="form-label">Ngày tạo</label>
+							<input type="text" class="form-control" value="{{ task.created_at }}" readonly>
+						</div>
+						
+						<div class="col-12">
+							<label class="form-label">Ghi chú thêm</label>
+							<textarea name="note" class="form-control" rows="2" placeholder="Ghi chú bổ sung (tùy chọn)...">{{ task.note or '' }}</textarea>
+						</div>
+						
+						<!-- Lịch sử bàn giao -->
+						{% if task.handover_history %}
+						<div class="col-12">
+							<label class="form-label">Lịch sử bàn giao</label>
+							<div class="card bg-light">
+								<div class="card-body">
+									{% for handover in task.handover_history %}
+									<div class="border-bottom pb-2 mb-2">
+										<div class="d-flex justify-content-between">
+											<strong>{{ handover.from_user }} → {{ handover.to_user }}</strong>
+											<small class="text-muted">{{ handover.handover_date[:16] }}</small>
+										</div>
+										{% if handover.handover_note %}
+										<div class="text-muted small mt-1">{{ handover.handover_note }}</div>
+										{% endif %}
+									</div>
+									{% endfor %}
+								</div>
+							</div>
+						</div>
+						{% endif %}
+						
+						<div class="col-12">
+							<div class="d-grid gap-2 d-md-flex justify-content-md-end">
+								<a href="{{ url_for('pages.task_assignment_list') }}" class="btn btn-outline-secondary me-md-2">
+									Hủy
+								</a>
+								<button type="submit" class="btn btn-primary">
+									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+										<path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+									</svg>
+									Cập nhật công việc
+								</button>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+{% endblock %}

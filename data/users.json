@@ -9,95 +9,175 @@
         "customers",
         "receiving",
         "closing",
-        "irradiation"
+        "irradiation",
+        "task_assignment"
       ],
-      "active": true
+      "workflow_roles": [
+        "customer_info",
+        "receiving",
+        "closing",
+        "irradiation",
+        "task_assignment"
+      ],
+      "active": true,
+      "detailed_permissions": {
+        "users": "edit",
+        "customers": "edit",
+        "receiving": "edit",
+        "closing": "edit",
+        "irradiation": "edit",
+        "task_assignment": "edit"
+      }
     },
     {
       "username": "Nguyễn Đăng Khuê",
       "password_hash": "scrypt:32768:8:1$hjw3plYlug79YchE$59da33bd664d4264735740177f73cb2c97c7dfba06fe84bbcd312d9535ecca95ad348cf03ee0bd702bd3690ebb910aabffb5a133c50484b1d3e7ac1a677fea6a",
-      "role": "admin",
+      "role": "user",
       "permissions": [
-        "users",
         "customers",
         "receiving",
         "closing",
+        "irradiation",
+        "task_assignment"
+      ],
+      "workflow_roles": [
+        "closing",
         "irradiation"
       ],
-      "active": true
-    },
-    {
-      "username": "Test 1",
-      "password_hash": "scrypt:32768:8:1$LuQtMFhqhmL2Wjog$8cd39717f4c67249c344cc02494944106b9511166cceac3f7e291347b89226a6922c556f2858270da06e30f4f544259e17f452880d9c79d2e8334f92c3a7f31b",
-      "role": "user",
-      "permissions": [
-        "receiving",
-        "closing"
-      ],
-      "active": true
+      "active": true,
+      "detailed_permissions": {
+        "users": "none",
+        "customers": "view",
+        "receiving": "view",
+        "closing": "edit",
+        "irradiation": "edit",
+        "task_assignment": "view"
+      }
     },
     {
       "username": "NHNghia",
       "password_hash": "scrypt:32768:8:1$1dFkQgw8Bnx5OSkm$6b022503fcabbfe2c0fb670ae0647b9808ee7d65a239bbd51d1544c040f758251cf589fbcecce90957f674c9c998c24487e4828626216a734511ae4e913f6580",
-      "role": "admin",
+      "role": "user",
       "permissions": [
         "users",
         "customers",
         "receiving",
         "closing",
-        "irradiation"
+        "irradiation",
+        "task_assignment"
       ],
-      "active": true
-    },
-    {
-      "username": "TTANH",
-      "password_hash": "scrypt:32768:8:1$i4FMELYXXwHLWoj4$0dc88926ce635d4513aa3e7ced97a782eadfdcfd770c230e6415b2bd67b3beb3abe69e3e2bd8c3704872f0805a7d312b8f3989dd14fc18b0fb19e7a30651b38b",
-      "role": "admin",
-      "permissions": [
-        "users",
-        "customers",
-        "receiving",
+      "workflow_roles": [
         "closing",
         "irradiation"
       ],
-      "active": true
+      "active": true,
+      "detailed_permissions": {
+        "users": "view",
+        "customers": "view",
+        "receiving": "view",
+        "closing": "edit",
+        "irradiation": "edit",
+        "task_assignment": "view"
+      }
     },
     {
       "username": "TQTHIEN",
       "password_hash": "scrypt:32768:8:1$0gMy4jHEyYqnNhjR$5012497848e0e922b5c7e69785df6e647be2c1d372f3637b935ae8eee687a06332fefacb9e4adce70c0112f1c0e324c11f64b00973861e0f47da23e670c25e0f",
-      "role": "admin",
+      "role": "user",
       "permissions": [
         "users",
         "customers",
         "receiving",
         "closing",
-        "irradiation"
+        "irradiation",
+        "task_assignment"
       ],
-      "active": true
+      "workflow_roles": [
+        "customer_info"
+      ],
+      "active": true,
+      "detailed_permissions": {
+        "users": "view",
+        "customers": "view",
+        "receiving": "view",
+        "closing": "view",
+        "irradiation": "view",
+        "task_assignment": "view"
+      }
     },
     {
       "username": "TTTHUONG",
       "password_hash": "scrypt:32768:8:1$TPWxKNNrk07Htc6p$47b8edbab2bd277de7ff75ff734679347379f1d48ef8a0a413131f7594fd522182acb94319e42a1a37fcab6481ba19130a705685ac36f691de06cc4c70c21756",
-      "role": "admin",
+      "role": "user",
       "permissions": [
         "users",
         "customers",
         "receiving",
         "closing",
+        "irradiation",
+        "task_assignment"
+      ],
+      "workflow_roles": [
         "irradiation"
       ],
-      "active": true
+      "active": true,
+      "detailed_permissions": {
+        "users": "view",
+        "customers": "view",
+        "receiving": "view",
+        "closing": "view",
+        "irradiation": "edit",
+        "task_assignment": "view"
+      }
     },
     {
       "username": "CTNQUYNH",
       "password_hash": "scrypt:32768:8:1$bMQfspMhUhSbXFE2$58c1ca9324116045c3b3ad09a4be8281df4a79ef2eb3054cfd8691717f376885e9a5f0d054b5b3cf24a6a57a0ce966839c14c8a6cea3d74d7ed81715a3b6ea88",
-      "role": "admin",
+      "role": "user",
       "permissions": [
         "users",
         "customers",
         "receiving",
         "closing",
-        "irradiation"
+        "irradiation",
+        "task_assignment"
+      ],
+      "workflow_roles": [
+        "receiving",
+        "closing"
+      ],
+      "active": true,
+      "detailed_permissions": {
+        "users": "edit",
+        "customers": "edit",
+        "receiving": "edit",
+        "closing": "edit",
+        "irradiation": "view",
+        "task_assignment": "view"
+      }
+    },
+    {
+      "username": "TTANH",
+      "password_hash": "scrypt:32768:8:1$wbqomMlujv6FeXaE$f22d09c1142cf57974c99f82ece21b822c5fe6d2862add54006c90a577e671922990350f6be9765aaa229f81ca8c57050a81569d91426be407b0f9da56485366",
+      "role": "user",
+      "permissions": [
+        "users",
+        "customers",
+        "receiving",
+        "closing",
+        "irradiation",
+        "task_assignment"
+      ],
+      "detailed_permissions": {
+        "users": "edit",
+        "customers": "view",
+        "receiving": "view",
+        "closing": "view",
+        "irradiation": "view",
+        "task_assignment": "edit"
+      },
+      "workflow_roles": [
+        "customer_info"
       ],
       "active": true
     }
