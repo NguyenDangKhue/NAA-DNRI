@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% block title %}Đóng mẫu chuẩn · LabManage{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+	<div class="d-flex align-items-center">
+		<a href="{{ url_for('pages.closing_index') }}" class="btn btn-outline-secondary btn-sm me-3">
+			<i class="bi bi-arrow-left"></i> Quay lại
+		</a>
+		<h1 class="h4 mb-0">Đóng mẫu chuẩn</h1>
+	</div>
+</div>
+
+<div class="row g-4">
+	<div class="col-12 col-lg-6">
+		<div class="card shadow-sm border-0 rounded-4">
+			<div class="card-body p-4">
+				<h2 class="h6">Thêm mẫu chuẩn</h2>
+				<form method="post" action="{{ url_for('pages.closing_standard_add') }}">
+					<div class="mb-3">
+						<label class="form-label">Tên mẫu chuẩn</label>
+						<select name="standard_name" id="standardNameSelect" class="form-control" required>
+							<option value="">-- Chọn mẫu chuẩn --</option>
+						</select>
+						<small class="form-text text-muted">
+							<a href="{{ url_for('pages.closing_standard_inventory') }}" target="_blank" class="text-decoration-none">
+								<i class="bi bi-plus-circle"></i> Thêm mẫu chuẩn mới vào danh sách
+							</a>
+						</small>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Tên box</label>
+						<input type="text" name="box_name" class="form-control" required>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Khối lượng (g)</label>
+						<input type="number" name="weight" id="weightInput" class="form-control" step="0.001" required 
+							   oninput="calculateCorrectedWeight()">
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Độ ẩm (%)</label>
+						<input type="number" name="moisture" id="moistureInput" class="form-control" step="0.01" value="0" 
+							   oninput="calculateCorrectedWeight()">
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Khối lượng hiệu chỉnh (g)</label>
+						<input type="number" name="corrected_weight" id="correctedWeightInput" class="form-control" step="0.001" readonly>
+						<small class="form-text text-muted">Tự động tính: Khối lượng - (Khối lượng × Độ ẩm / 100)</small>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Ghi chú</label>
+						<textarea name="note" class="form-control" rows="3"></textarea>
+					</div>
+					<button type="submit" class="btn btn-primary">Thêm mẫu chuẩn</button>
+				</form>
+			</div>
+		</div>
+	</div>
+	
+	<div class="col-12 col-lg-6">
+		<div class="card shadow-sm border-0 rounded-4">
+			<div class="card-body p-4">
+				<div class="d-flex justify-content-between align-items-center mb-3">
+					<h2 class="h6 mb-0">Danh sách mẫu chuẩn đã đóng</h2>
+					<div class="d-flex gap-2">
+						<a href="{{ url_for('pages.closing_standard_inventory') }}" class="btn btn-outline-warning btn-sm">
+							<i class="bi bi-box-seam"></i> Danh sách mẫu chuẩn hiện có
+						</a>
+						<a href="{{ url_for('pages.closing_standard_template') }}" class="btn btn-outline-info btn-sm">
+							<i class="bi bi-file-earmark-text"></i> Tải mẫu CSV
+						</a>
+						<button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#importModal">
+							<i class="bi bi-upload"></i> Import CSV
+						</button>
+						<a href="{{ url_for('pages.closing_standard_export') }}" class="btn btn-outline-success btn-sm">
+							<i class="bi bi-download"></i> Xuất Excel
+						</a>
+					</div>
+				</div>
+				
+				<div class="table-responsive">
+					<table class="table align-middle">
+						<thead>
+							<tr>
+								<th>Tên mẫu</th>
+								<th>Tên box</th>
+								<th>Khối lượng (g)</th>
+								<th>Độ ẩm (%)</th>
+								<th>Khối lượng hiệu chỉnh (g)</th>
+								<th>Ngày đóng</th>
+								<th class="text-end">Thao tác</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% if standards %}
+								{% for standard in standards %}
+								<tr>
+									<td>{{ standard.standard_name }}</td>
+									<td>{{ standard.box_name }}</td>
+									<td>{{ "%.3f"|format(standard.weight) }}</td>
+									<td>{{ "%.2f"|format(standard.moisture) }}</td>
+									<td>{{ "%.3f"|format(standard.corrected_weight) }}</td>
+									<td>{{ standard.closing_date }}</td>
+									<td class="text-end">
+										<div class="btn-group btn-group-sm">
+											<button class="btn btn-outline-primary btn-sm edit-standard-btn" data-standard-id="{{ standard.id }}">
+												<i class="bi bi-pencil"></i>
+											</button>
+											<button class="btn btn-outline-danger btn-sm delete-standard-btn" data-standard-id="{{ standard.id }}">
+												<i class="bi bi-trash"></i>
+											</button>
+										</div>
+									</td>
+								</tr>
+								{% endfor %}
+							{% else %}
+								<tr>
+									<td colspan="7" class="text-center text-muted py-4">
+										<i class="bi bi-inbox"></i><br>
+										Chưa có mẫu chuẩn nào được đóng
+									</td>
+								</tr>
+							{% endif %}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="importModalLabel">
+					<i class="bi bi-upload"></i> Import mẫu chuẩn từ CSV
+				</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<form method="post" action="{{ url_for('pages.closing_standard_import') }}" enctype="multipart/form-data">
+				<div class="modal-body">
+					<div class="mb-3">
+						<label for="csv_file" class="form-label">Chọn file CSV</label>
+						<input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
+						<div class="form-text">
+							<strong>Lưu ý:</strong> File CSV phải có định dạng đúng với template.
+							<a href="{{ url_for('pages.closing_standard_template') }}" class="text-decoration-none">
+								<i class="bi bi-download"></i> Tải mẫu CSV
+							</a>
+						</div>
+					</div>
+					<div class="alert alert-info">
+						<h6><i class="bi bi-info-circle"></i> Hướng dẫn:</h6>
+						<ul class="mb-0">
+							<li>Tải file mẫu CSV để xem định dạng</li>
+							<li>Điền thông tin mẫu chuẩn vào file CSV</li>
+							<li>Upload file CSV đã điền thông tin</li>
+							<li>Hệ thống sẽ tự động tạo các mẫu chuẩn</li>
+						</ul>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+					<button type="submit" class="btn btn-primary">
+						<i class="bi bi-upload"></i> Import
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<script>
+// Add event listeners for edit and delete buttons
+document.addEventListener('click', function(e) {
+	if (e.target.closest('.edit-standard-btn')) {
+		const standardId = e.target.closest('.edit-standard-btn').getAttribute('data-standard-id');
+		editStandard(standardId);
+	}
+	
+	if (e.target.closest('.delete-standard-btn')) {
+		const standardId = e.target.closest('.delete-standard-btn').getAttribute('data-standard-id');
+		deleteStandard(standardId);
+	}
+});
+
+function editStandard(standardId) {
+	// Redirect to edit page
+	window.location.href = `{{ url_for('pages.closing_standard_edit', standard_id=0) }}`.replace('0', standardId);
+}
+
+function deleteStandard(standardId) {
+	if (confirm('Bạn có chắc chắn muốn xóa mẫu chuẩn này?')) {
+		const form = document.createElement('form');
+		form.method = 'POST';
+		form.action = `{{ url_for('pages.closing_standard_delete', standard_id=0) }}`.replace('0', standardId);
+		document.body.appendChild(form);
+		form.submit();
+	}
+}
+
+// Load standard names from inventory
+function loadStandardNames() {
+	fetch('/api/standard-inventory')
+		.then(response => response.json())
+		.then(inventories => {
+			const select = document.getElementById('standardNameSelect');
+			select.innerHTML = '<option value="">-- Chọn mẫu chuẩn --</option>';
+			
+			inventories.forEach(inventory => {
+				const option = document.createElement('option');
+				option.value = inventory.standard_name;
+				option.textContent = inventory.standard_name;
+				// Add standard type as data attribute
+				option.setAttribute('data-standard-type', inventory.standard_type || '');
+				select.appendChild(option);
+			});
+		})
+		.catch(error => {
+			console.error('Error loading standard names:', error);
+		});
+}
+
+// Auto-fill standard type when standard name is selected
+document.getElementById('standardNameSelect').addEventListener('change', function() {
+	const selectedOption = this.options[this.selectedIndex];
+	const standardType = selectedOption.getAttribute('data-standard-type');
+	
+	// Auto-fill standard type if available
+	if (standardType) {
+		const standardTypeSelect = document.querySelector('select[name="standard_type"]');
+		if (standardTypeSelect) {
+			// Find matching option
+			for (let option of standardTypeSelect.options) {
+				if (option.value === standardType) {
+					standardTypeSelect.value = standardType;
+					break;
+				}
+			}
+		}
+	}
+});
+
+// Calculate corrected weight
+function calculateCorrectedWeight() {
+	const weight = parseFloat(document.getElementById('weightInput').value) || 0;
+	const moisture = parseFloat(document.getElementById('moistureInput').value) || 0;
+	const moistureWeight = weight * (moisture / 100);
+	const correctedWeight = weight - moistureWeight;
+	
+	document.getElementById('correctedWeightInput').value = correctedWeight.toFixed(3);
+}
+
+// Initialize form
+document.addEventListener('DOMContentLoaded', function() {
+	loadStandardNames();
+});
+</script>
+{% endblock %}

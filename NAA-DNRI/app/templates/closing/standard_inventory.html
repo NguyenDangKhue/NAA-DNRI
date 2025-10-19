@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+{% block title %}Danh sách mẫu chuẩn hiện có · LabManage{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+	<div class="d-flex align-items-center">
+		<a href="{{ url_for('pages.closing_standard') }}" class="btn btn-outline-secondary btn-sm me-3">
+			<i class="bi bi-arrow-left"></i> Quay lại
+		</a>
+		<h1 class="h4 mb-0">Danh sách mẫu chuẩn hiện có</h1>
+	</div>
+	<div class="d-flex gap-2">
+		<button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addInventoryModal">
+			<i class="bi bi-plus-circle"></i> Thêm mẫu chuẩn
+		</button>
+		<a href="{{ url_for('pages.closing_standard_inventory_export') }}" class="btn btn-outline-success btn-sm">
+			<i class="bi bi-download"></i> Xuất Excel
+		</a>
+	</div>
+</div>
+
+<div class="row g-4">
+	<div class="col-12">
+		<div class="card shadow-sm border-0 rounded-4">
+			<div class="card-body p-4">
+				<!-- Filter and Search Controls -->
+				<div class="row mb-3">
+					<div class="col-md-6">
+						<form method="GET" class="d-flex gap-2">
+							<select name="standard_type" class="form-select form-select-sm" onchange="this.form.submit()">
+								<option value="">-- Tất cả loại mẫu chuẩn --</option>
+								{% for standard_type in unique_types %}
+								<option value="{{ standard_type }}" {% if standard_type == selected_standard_type %}selected{% endif %}>
+									{{ standard_type }}
+								</option>
+								{% endfor %}
+							</select>
+							<select name="per_page" class="form-select form-select-sm" onchange="this.form.submit()">
+								<option value="10" {% if per_page == 10 %}selected{% endif %}>10/trang</option>
+								<option value="20" {% if per_page == 20 %}selected{% endif %}>20/trang</option>
+								<option value="50" {% if per_page == 50 %}selected{% endif %}>50/trang</option>
+								<option value="100" {% if per_page == 100 %}selected{% endif %}>100/trang</option>
+							</select>
+						</form>
+					</div>
+					<div class="col-md-6 text-end">
+						<small class="text-muted">
+							Hiển thị {{ inventories|length }} / {{ total_count }} mẫu chuẩn
+							{% if selected_standard_type %}
+								- Lọc theo: {{ selected_standard_type }}
+							{% endif %}
+						</small>
+					</div>
+				</div>
+				
+				<div class="table-responsive">
+					<table class="table align-middle">
+						<thead>
+							<tr>
+								<th>Tên mẫu chuẩn</th>
+								<th>Ký hiệu box</th>
+								<th>Khối lượng tổng (g)</th>
+								<th>Khối lượng đã sử dụng (g)</th>
+								<th>Khối lượng còn lại (g)</th>
+								<th>Thông tin chứng nhận</th>
+								<th class="text-end">Thao tác</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% if inventories %}
+								{% for inventory in inventories %}
+								<tr>
+									<td>
+										<strong>{{ inventory.standard_name }}</strong>
+										{% if inventory.standard_type %}
+											<br><small class="text-muted">
+												{% if inventory.standard_type == 'thuc_vat' %}
+													Mẫu chuẩn thực vật
+												{% elif inventory.standard_type == 'dat_da' %}
+													Mẫu chuẩn đất đá
+												{% else %}
+													{{ inventory.standard_type }}
+												{% endif %}
+											</small>
+										{% endif %}
+									</td>
+									<td>{{ inventory.box_symbol }}</td>
+									<td>{{ "%.3f"|format(inventory.total_weight) }}</td>
+									<td>{{ "%.3f"|format(inventory.used_weight) }}</td>
+									<td>
+										<span class="badge {% if inventory.remaining_weight > 0 %}bg-success{% else %}bg-danger{% endif %}">
+											{{ "%.3f"|format(inventory.remaining_weight) }}
+										</span>
+									</td>
+									<td>
+										{% if inventory.certificate_file %}
+											<a href="{{ url_for('pages.closing_standard_inventory_download', inventory_id=inventory.id) }}" 
+											   class="btn btn-outline-primary btn-sm" title="Tải file chứng nhận">
+												<i class="bi bi-file-earmark-pdf"></i> PDF
+											</a>
+										{% else %}
+											<span class="text-muted">Chưa có</span>
+										{% endif %}
+									</td>
+									<td class="text-end">
+										<div class="btn-group btn-group-sm">
+											<button class="btn btn-outline-primary btn-sm edit-inventory-btn" data-inventory-id="{{ inventory.id }}">
+												<i class="bi bi-pencil"></i>
+											</button>
+											<button class="btn btn-outline-info btn-sm upload-certificate-btn" data-inventory-id="{{ inventory.id }}">
+												<i class="bi bi-upload"></i>
+											</button>
+											<button class="btn btn-outline-danger btn-sm delete-inventory-btn" data-inventory-id="{{ inventory.id }}">
+												<i class="bi bi-trash"></i>
+											</button>
+										</div>
+									</td>
+								</tr>
+								{% endfor %}
+							{% else %}
+								<tr>
+									<td colspan="7" class="text-center text-muted py-4">
+										<i class="bi bi-inbox"></i><br>
+										Chưa có mẫu chuẩn nào trong kho
+									</td>
+								</tr>
+							{% endif %}
+						</tbody>
+					</table>
+				</div>
+				
+				<!-- Pagination -->
+				{% if total_pages > 1 %}
+				<nav aria-label="Pagination">
+					<ul class="pagination pagination-sm justify-content-center">
+						<!-- Previous page -->
+						{% if current_page > 1 %}
+						<li class="page-item">
+							<a class="page-link" href="?page={{ current_page - 1 }}&per_page={{ per_page }}{% if selected_standard_type %}&standard_type={{ selected_standard_type }}{% endif %}">
+								<i class="bi bi-chevron-left"></i>
+							</a>
+						</li>
+						{% else %}
+						<li class="page-item disabled">
+							<span class="page-link"><i class="bi bi-chevron-left"></i></span>
+						</li>
+						{% endif %}
+						
+						<!-- Page numbers -->
+						{% set start_page = [1, current_page - 2]|max %}
+						{% set end_page = [total_pages, current_page + 2]|min %}
+						
+						{% if start_page > 1 %}
+						<li class="page-item">
+							<a class="page-link" href="?page=1&per_page={{ per_page }}{% if selected_standard_type %}&standard_type={{ selected_standard_type }}{% endif %}">1</a>
+						</li>
+						{% if start_page > 2 %}
+						<li class="page-item disabled"><span class="page-link">...</span></li>
+						{% endif %}
+						{% endif %}
+						
+						{% for page_num in range(start_page, end_page + 1) %}
+						<li class="page-item {% if page_num == current_page %}active{% endif %}">
+							<a class="page-link" href="?page={{ page_num }}&per_page={{ per_page }}{% if selected_standard_type %}&standard_type={{ selected_standard_type }}{% endif %}">
+								{{ page_num }}
+							</a>
+						</li>
+						{% endfor %}
+						
+						{% if end_page < total_pages %}
+						{% if end_page < total_pages - 1 %}
+						<li class="page-item disabled"><span class="page-link">...</span></li>
+						{% endif %}
+						<li class="page-item">
+							<a class="page-link" href="?page={{ total_pages }}&per_page={{ per_page }}{% if selected_standard_type %}&standard_type={{ selected_standard_type }}{% endif %}">{{ total_pages }}</a>
+						</li>
+						{% endif %}
+						
+						<!-- Next page -->
+						{% if current_page < total_pages %}
+						<li class="page-item">
+							<a class="page-link" href="?page={{ current_page + 1 }}&per_page={{ per_page }}{% if selected_standard_type %}&standard_type={{ selected_standard_type }}{% endif %}">
+								<i class="bi bi-chevron-right"></i>
+							</a>
+						</li>
+						{% else %}
+						<li class="page-item disabled">
+							<span class="page-link"><i class="bi bi-chevron-right"></i></span>
+						</li>
+						{% endif %}
+					</ul>
+				</nav>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Add Inventory Modal -->
+<div class="modal fade" id="addInventoryModal" tabindex="-1" aria-labelledby="addInventoryModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="addInventoryModalLabel">
+					<i class="bi bi-plus-circle"></i> Thêm mẫu chuẩn vào kho
+				</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<form method="post" action="{{ url_for('pages.closing_standard_inventory_add') }}" enctype="multipart/form-data">
+				<div class="modal-body">
+					<div class="row g-3">
+						<div class="col-md-6">
+							<label class="form-label">Tên mẫu chuẩn</label>
+							<input type="text" name="standard_name" class="form-control" required>
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">Ký hiệu box</label>
+							<input type="text" name="box_symbol" class="form-control" required>
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">Khối lượng tổng (g)</label>
+							<input type="number" name="total_weight" class="form-control" step="0.001" required>
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">Khối lượng đã sử dụng (g)</label>
+							<input type="number" name="used_weight" class="form-control" step="0.001" readonly value="0">
+							<small class="form-text text-muted">Tự động tính từ module Đóng mẫu chuẩn</small>
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">Loại mẫu chuẩn</label>
+							<select name="standard_type" class="form-select">
+								<option value="">Chọn loại mẫu chuẩn</option>
+								<option value="thuc_vat">Mẫu chuẩn thực vật</option>
+								<option value="dat_da">Mẫu chuẩn đất đá</option>
+							</select>
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">File chứng nhận (PDF)</label>
+							<input type="file" name="certificate_file" class="form-control" accept=".pdf">
+						</div>
+						<div class="col-12">
+							<label class="form-label">Ghi chú</label>
+							<textarea name="note" class="form-control" rows="3"></textarea>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+					<button type="submit" class="btn btn-primary">
+						<i class="bi bi-plus-circle"></i> Thêm mẫu chuẩn
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<!-- Upload Certificate Modal -->
+<div class="modal fade" id="uploadCertificateModal" tabindex="-1" aria-labelledby="uploadCertificateModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="uploadCertificateModalLabel">
+					<i class="bi bi-upload"></i> Upload file chứng nhận
+				</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<form method="post" action="" enctype="multipart/form-data" id="uploadCertificateForm">
+				<div class="modal-body">
+					<div class="mb-3">
+						<label for="certificate_file" class="form-label">Chọn file PDF chứng nhận</label>
+						<input type="file" class="form-control" id="certificate_file" name="certificate_file" accept=".pdf" required>
+						<div class="form-text">Chỉ chấp nhận file PDF</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+					<button type="submit" class="btn btn-primary">
+						<i class="bi bi-upload"></i> Upload
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<script>
+// Add event listeners for buttons
+document.addEventListener('click', function(e) {
+	if (e.target.closest('.edit-inventory-btn')) {
+		const inventoryId = e.target.closest('.edit-inventory-btn').getAttribute('data-inventory-id');
+		editInventory(inventoryId);
+	}
+	
+	if (e.target.closest('.upload-certificate-btn')) {
+		const inventoryId = e.target.closest('.upload-certificate-btn').getAttribute('data-inventory-id');
+		uploadCertificate(inventoryId);
+	}
+	
+	if (e.target.closest('.delete-inventory-btn')) {
+		const inventoryId = e.target.closest('.delete-inventory-btn').getAttribute('data-inventory-id');
+		deleteInventory(inventoryId);
+	}
+});
+
+function editInventory(inventoryId) {
+	// Redirect to edit page
+	window.location.href = `{{ url_for('pages.closing_standard_inventory_edit', inventory_id=0) }}`.replace('0', inventoryId);
+}
+
+function uploadCertificate(inventoryId) {
+	// Set form action and show modal
+	const form = document.getElementById('uploadCertificateForm');
+	form.action = `{{ url_for('pages.closing_standard_inventory_upload_certificate', inventory_id=0) }}`.replace('0', inventoryId);
+	
+	const modal = new bootstrap.Modal(document.getElementById('uploadCertificateModal'));
+	modal.show();
+}
+
+function deleteInventory(inventoryId) {
+	if (confirm('Bạn có chắc chắn muốn xóa mẫu chuẩn này khỏi kho?')) {
+		const form = document.createElement('form');
+		form.method = 'POST';
+		form.action = `{{ url_for('pages.closing_standard_inventory_delete', inventory_id=0) }}`.replace('0', inventoryId);
+		document.body.appendChild(form);
+		form.submit();
+	}
+}
+</script>
+{% endblock %}

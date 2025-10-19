@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}Tạo công việc mới · LabManage{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+	<div class="fw-semibold text-primary-emphasis" style="font-size: 1.05rem;">
+		<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#2ec4b6" class="me-1 mb-1" viewBox="0 0 16 16">
+			<path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+		</svg>
+		Tạo công việc mới
+	</div>
+	<div>
+		<a href="{{ url_for('pages.task_assignment_list') }}" class="btn btn-outline-secondary">
+			<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+				<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+			</svg>
+			Quay lại danh sách
+		</a>
+	</div>
+</div>
+
+<div class="row justify-content-center">
+	<div class="col-lg-8">
+		<div class="card shadow-sm border-0 rounded-4">
+			<div class="card-header bg-primary text-white">
+				<h5 class="mb-0">
+					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+						<path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+					</svg>
+					Thông tin công việc
+				</h5>
+			</div>
+			<div class="card-body p-4">
+				<form method="POST" action="{{ url_for('pages.task_assignment_create') }}">
+					<div class="row g-3">
+						<div class="col-12">
+							<label class="form-label">Tiêu đề công việc <span class="text-danger">*</span></label>
+							<input type="text" name="title" class="form-control" placeholder="Nhập tiêu đề công việc..." required>
+						</div>
+						
+						<div class="col-12">
+							<label class="form-label">Mô tả chi tiết <span class="text-danger">*</span></label>
+							<textarea name="description" class="form-control" rows="4" placeholder="Mô tả chi tiết về công việc cần thực hiện..." required></textarea>
+						</div>
+						
+						<div class="col-md-6">
+							<label class="form-label">Người được giao <span class="text-danger">*</span></label>
+							<select name="assigned_to" class="form-select" required>
+								<option value="">-- Chọn người được giao --</option>
+								{% for user in all_users %}
+								<option value="{{ user.username }}">{{ user.username }}</option>
+								{% endfor %}
+							</select>
+						</div>
+						
+						<div class="col-md-6">
+							<label class="form-label">Độ ưu tiên</label>
+							<select name="priority" class="form-select">
+								<option value="low">Thấp</option>
+								<option value="medium" selected>Trung bình</option>
+								<option value="high">Cao</option>
+							</select>
+						</div>
+						
+						<div class="col-md-6">
+							<label class="form-label">Hạn hoàn thành</label>
+							<input type="date" name="due_date" class="form-control">
+							<div class="form-text">Để trống nếu không có hạn cụ thể</div>
+						</div>
+						
+						<div class="col-md-6">
+							<label class="form-label">Danh mục</label>
+							<input type="text" name="category" class="form-control" placeholder="Ví dụ: Phân tích, Kiểm tra, Báo cáo...">
+						</div>
+						
+						<div class="col-12">
+							<label class="form-label">Ghi chú thêm</label>
+							<textarea name="note" class="form-control" rows="2" placeholder="Ghi chú bổ sung (tùy chọn)..."></textarea>
+						</div>
+						
+						<div class="col-12">
+							<div class="d-grid gap-2 d-md-flex justify-content-md-end">
+								<a href="{{ url_for('pages.task_assignment_list') }}" class="btn btn-outline-secondary me-md-2">
+									Hủy
+								</a>
+								<button type="submit" class="btn btn-primary">
+									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+										<path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+									</svg>
+									Tạo công việc
+								</button>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+{% endblock %}

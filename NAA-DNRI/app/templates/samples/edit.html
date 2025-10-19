@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Chỉnh sửa mẫu · LabManage{% endblock %}
+{% block content %}
+<h1 class="h4 mb-4">Chỉnh sửa mẫu</h1>
+<div class="row">
+	<div class="col-12 col-lg-6">
+		<div class="card shadow-sm border-0 rounded-4">
+			<div class="card-body p-4">
+				<form method="post" action="{{ url_for('pages.samples_update', sample_id=sample.id) }}">
+					<div class="mb-3">
+						<label class="form-label">Khách hàng gửi mẫu</label>
+						<select name="customer_id" class="form-select" required>
+							<option value="">Chọn khách hàng</option>
+							{% for c in customers %}
+							<option value="{{ c.id }}" {% if c.id == sample.customer_id %}selected{% endif %}>{{ c.name }} ({{ c.organization }})</option>
+							{% endfor %}
+						</select>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Tên mẫu</label>
+						<input type="text" name="sample_name" class="form-control" value="{{ sample.sample_name }}" required>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Mã hóa mẫu</label>
+						<input type="text" name="sample_code" class="form-control" value="{{ sample.sample_code }}">
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Loại mẫu</label>
+						<input type="text" name="sample_type" class="form-control" value="{{ sample.sample_type }}">
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Chỉ tiêu phân tích</label>
+						<input type="text" name="analysis_target" class="form-control" value="{{ sample.analysis_target }}">
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Ghi chú</label>
+						<textarea name="note" class="form-control" rows="3">{{ sample.note }}</textarea>
+					</div>
+					<div class="d-flex gap-2">
+						<button type="submit" class="btn btn-primary">Lưu</button>
+						<a href="{{ url_for('pages.samples_list') }}" class="btn btn-outline-secondary">Huỷ</a>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}

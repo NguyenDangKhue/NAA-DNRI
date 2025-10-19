@@ -1,0 +1,51 @@
+========================================
+    GIAI PHAP CHO VẤN ĐỀ FIREWALL
+========================================
+
+🚨 VẤN ĐỀ: Người khác không truy cập được http://192.168.1.201:5000
+🔍 NGUYÊN NHÂN: Windows Firewall đang chặn kết nối
+
+========================================
+    GIẢI PHÁP NHANH NHẤT
+========================================
+
+1️⃣ TẮT TẠM THỜI FIREWALL (Nhanh nhất):
+   • Chạy: disable_firewall_temp.bat
+   • Test từ thiết bị khác
+   • Nhớ bật lại: enable_firewall.bat
+
+2️⃣ MỞ FIREWALL THỦ CÔNG:
+   • Xem: HUONG_DAN_FIREWALL.md
+   • Hoặc chạy: fix_firewall.ps1 (cần quyền Admin)
+
+========================================
+    KIỂM TRA NHANH
+========================================
+
+• Chạy: quick_test.bat
+• Kiểm tra server: netstat -an | findstr :5000
+• Test local: http://localhost:5000
+
+========================================
+    CÁC FILE HỖ TRỢ
+========================================
+
+📁 Scripts:
+• disable_firewall_temp.bat - Tắt tạm thời Firewall
+• enable_firewall.bat - Bật lại Firewall  
+• fix_firewall.ps1 - Mở Firewall (cần Admin)
+• quick_test.bat - Kiểm tra nhanh
+
+📁 Hướng dẫn:
+• HUONG_DAN_FIREWALL.md - Hướng dẫn chi tiết
+• GIAI_PHAP_FIREWALL.txt - File này
+
+========================================
+    BƯỚC TIẾP THEO
+========================================
+
+1. Chạy: disable_firewall_temp.bat
+2. Khởi động server: python -m app  
+3. Test từ thiết bị khác: http://192.168.1.201:5000
+4. Nếu OK → Bật lại Firewall: enable_firewall.bat
+5. Nếu vẫn lỗi → Xem HUONG_DAN_FIREWALL.md

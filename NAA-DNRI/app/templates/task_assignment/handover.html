@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% block title %}Bàn giao công việc · LabManage{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+	<div class="fw-semibold text-primary-emphasis" style="font-size: 1.05rem;">
+		<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#2ec4b6" class="me-1 mb-1" viewBox="0 0 16 16">
+			<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+		</svg>
+		Bàn giao công việc #{{ task.id }}
+	</div>
+	<div>
+		<a href="{{ url_for('pages.task_assignment_my_tasks') }}" class="btn btn-outline-secondary">
+			<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+				<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+			</svg>
+			Quay lại công việc của tôi
+		</a>
+	</div>
+</div>
+
+<div class="row justify-content-center">
+	<div class="col-lg-8">
+		<!-- Thông tin công việc hiện tại -->
+		<div class="card mb-4">
+			<div class="card-header bg-info text-white">
+				<h5 class="mb-0">
+					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+						<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+					</svg>
+					Thông tin công việc hiện tại
+				</h5>
+			</div>
+			<div class="card-body">
+				{% if task.status == 'completed' %}
+				<div class="alert alert-info mb-3">
+					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+						<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+					</svg>
+					<strong>Lưu ý:</strong> Công việc này đã hoàn thành. Sau khi bàn giao, trạng thái sẽ được reset về "Chờ xử lý" để người nhận có thể tiếp tục xử lý.
+				</div>
+				{% endif %}
+				<div class="row g-3">
+					<div class="col-md-6">
+						<label class="form-label fw-bold">Tiêu đề:</label>
+						<p class="mb-0">{{ task.title }}</p>
+					</div>
+					<div class="col-md-6">
+						<label class="form-label fw-bold">Trạng thái:</label>
+						<p class="mb-0">
+							{% if task.status == 'pending' %}
+								<span class="badge bg-warning">Chờ xử lý</span>
+							{% elif task.status == 'in_progress' %}
+								<span class="badge bg-info">Đang xử lý</span>
+							{% elif task.status == 'completed' %}
+								<span class="badge bg-success">Hoàn thành</span>
+							{% elif task.status == 'cancelled' %}
+								<span class="badge bg-secondary">Đã hủy</span>
+							{% endif %}
+						</p>
+					</div>
+					<div class="col-md-6">
+						<label class="form-label fw-bold">Độ ưu tiên:</label>
+						<p class="mb-0">
+							{% if task.priority == 'high' %}
+								<span class="badge bg-danger">Cao</span>
+							{% elif task.priority == 'medium' %}
+								<span class="badge bg-warning">Trung bình</span>
+							{% else %}
+								<span class="badge bg-secondary">Thấp</span>
+							{% endif %}
+						</p>
+					</div>
+					<div class="col-md-6">
+						<label class="form-label fw-bold">Người giao:</label>
+						<p class="mb-0">{{ task.assigned_by }}</p>
+					</div>
+					<div class="col-12">
+						<label class="form-label fw-bold">Mô tả:</label>
+						<p class="mb-0">{{ task.description }}</p>
+					</div>
+					{% if task.category %}
+					<div class="col-md-6">
+						<label class="form-label fw-bold">Danh mục:</label>
+						<p class="mb-0">{{ task.category }}</p>
+					</div>
+					{% endif %}
+					{% if task.due_date %}
+					<div class="col-md-6">
+						<label class="form-label fw-bold">Hạn hoàn thành:</label>
+						<p class="mb-0">{{ task.due_date }}</p>
+					</div>
+					{% endif %}
+				</div>
+			</div>
+		</div>
+
+		<!-- Form bàn giao -->
+		<div class="card shadow-sm border-0 rounded-4">
+			<div class="card-header bg-primary text-white">
+				<h5 class="mb-0">
+					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+						<path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+					</svg>
+					Thông tin bàn giao
+				</h5>
+			</div>
+			<div class="card-body p-4">
+				<form method="POST" action="{{ url_for('pages.task_assignment_handover', task_id=task.id) }}">
+					<div class="row g-3">
+						<div class="col-12">
+							<label class="form-label">Người nhận bàn giao <span class="text-danger">*</span></label>
+							<select name="to_user" class="form-select" required>
+								<option value="">-- Chọn người nhận bàn giao --</option>
+								{% for user in all_users %}
+									{% if user.username != task.assigned_to %}
+									<option value="{{ user.username }}">{{ user.username }}</option>
+									{% endif %}
+								{% endfor %}
+							</select>
+							<div class="form-text">Không thể bàn giao cho chính mình</div>
+						</div>
+						
+						<div class="col-12">
+							<label class="form-label">Ghi chú bàn giao</label>
+							<textarea name="handover_note" class="form-control" rows="4" placeholder="Mô tả tình trạng công việc, những gì đã hoàn thành, những gì cần tiếp tục..."></textarea>
+							<div class="form-text">Ghi chú này sẽ được lưu trong lịch sử bàn giao</div>
+						</div>
+						
+						<div class="col-12">
+							<div class="alert alert-warning">
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+									<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+								</svg>
+								<strong>Lưu ý:</strong> Sau khi bàn giao, công việc sẽ được chuyển cho người nhận và bạn sẽ không còn quyền chỉnh sửa trừ khi được bàn giao lại.
+							</div>
+						</div>
+						
+						<div class="col-12">
+							<div class="d-grid gap-2 d-md-flex justify-content-md-end">
+								<a href="{{ url_for('pages.task_assignment_my_tasks') }}" class="btn btn-outline-secondary me-md-2">
+									Hủy
+								</a>
+								<button type="submit" class="btn btn-primary">
+									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+										<path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+									</svg>
+									Xác nhận bàn giao
+								</button>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+
+		<!-- Lịch sử bàn giao -->
+		{% if task.handover_history %}
+		<div class="card mt-4">
+			<div class="card-header bg-light">
+				<h5 class="mb-0">
+					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+						<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+					</svg>
+					Lịch sử bàn giao
+				</h5>
+			</div>
+			<div class="card-body">
+				{% for handover in task.handover_history %}
+				<div class="border-bottom pb-3 mb-3">
+					<div class="d-flex justify-content-between align-items-start">
+						<div>
+							<strong>{{ handover.from_user }} → {{ handover.to_user }}</strong>
+							<div class="text-muted small">{{ handover.handover_date[:16] }}</div>
+						</div>
+					</div>
+					{% if handover.handover_note %}
+					<div class="mt-2 p-2 bg-light rounded">
+						<small class="text-muted">{{ handover.handover_note }}</small>
+					</div>
+					{% endif %}
+				</div>
+				{% endfor %}
+			</div>
+		</div>
+		{% endif %}
+	</div>
+</div>
+
+{% endblock %}

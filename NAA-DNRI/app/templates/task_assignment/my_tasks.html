@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% block title %}Công việc của tôi · LabManage{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+	<div class="fw-semibold text-primary-emphasis" style="font-size: 1.05rem;">
+		<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#2ec4b6" class="me-1 mb-1" viewBox="0 0 16 16">
+			<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+		</svg>
+		Công việc của tôi - <strong class="text-dark">{{ username }}</strong>
+	</div>
+	<div>
+		<a href="{{ url_for('pages.task_assignment_my_tasks_export') }}" class="btn btn-success">
+			<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+				<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+			</svg>
+			Xuất Excel
+		</a>
+	</div>
+</div>
+
+<!-- Thống kê cá nhân -->
+<div class="row g-4 mb-4">
+	<div class="col-md-3">
+		<div class="card bg-primary text-white">
+			<div class="card-body">
+				<div class="d-flex justify-content-between">
+					<div>
+						<h6 class="card-title">Tổng công việc</h6>
+						<h3 class="mb-0">{{ stats.total }}</h3>
+					</div>
+					<div class="align-self-center">
+						<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+							<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+						</svg>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="col-md-3">
+		<div class="card bg-warning text-white">
+			<div class="card-body">
+				<div class="d-flex justify-content-between">
+					<div>
+						<h6 class="card-title">Chờ xử lý</h6>
+						<h3 class="mb-0">{{ stats.pending }}</h3>
+					</div>
+					<div class="align-self-center">
+						<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+							<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+						</svg>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="col-md-3">
+		<div class="card bg-info text-white">
+			<div class="card-body">
+				<div class="d-flex justify-content-between">
+					<div>
+						<h6 class="card-title">Đang xử lý</h6>
+						<h3 class="mb-0">{{ stats.in_progress }}</h3>
+					</div>
+					<div class="align-self-center">
+						<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+							<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+						</svg>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="col-md-3">
+		<div class="card bg-success text-white">
+			<div class="card-body">
+				<div class="d-flex justify-content-between">
+					<div>
+						<h6 class="card-title">Hoàn thành</h6>
+						<h3 class="mb-0">{{ stats.completed }}</h3>
+					</div>
+					<div class="align-self-center">
+						<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+							<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+						</svg>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Bộ lọc -->
+<div class="card mb-4">
+	<div class="card-body">
+		<form method="GET" class="row g-3">
+			<div class="col-md-4">
+				<label class="form-label">Tìm kiếm</label>
+				<input type="text" name="search" class="form-control" placeholder="Tìm kiếm..." value="{{ search_query }}">
+			</div>
+			<div class="col-md-3">
+				<label class="form-label">Trạng thái</label>
+				<select name="status" class="form-select">
+					<option value="">Tất cả</option>
+					<option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Chờ xử lý</option>
+					<option value="in_progress" {% if selected_status == 'in_progress' %}selected{% endif %}>Đang xử lý</option>
+					<option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Hoàn thành</option>
+					<option value="cancelled" {% if selected_status == 'cancelled' %}selected{% endif %}>Đã hủy</option>
+				</select>
+			</div>
+			<div class="col-md-3">
+				<label class="form-label">Độ ưu tiên</label>
+				<select name="priority" class="form-select">
+					<option value="">Tất cả</option>
+					<option value="high" {% if selected_priority == 'high' %}selected{% endif %}>Cao</option>
+					<option value="medium" {% if selected_priority == 'medium' %}selected{% endif %}>Trung bình</option>
+					<option value="low" {% if selected_priority == 'low' %}selected{% endif %}>Thấp</option>
+				</select>
+			</div>
+			<div class="col-md-2">
+				<label class="form-label">&nbsp;</label>
+				<div class="d-grid">
+					<button type="submit" class="btn btn-primary">Lọc</button>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+
+<!-- Danh sách công việc -->
+<div class="card shadow-sm border-0 rounded-4">
+	<div class="card-header bg-light">
+		<h5 class="mb-0">
+			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+				<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+			</svg>
+			Công việc của tôi ({{ total_count }} công việc)
+		</h5>
+	</div>
+	<div class="card-body">
+		{% if tasks %}
+		<div class="table-responsive">
+			<table class="table table-hover">
+				<thead class="table-light">
+					<tr>
+						<th>ID</th>
+						<th>Tiêu đề</th>
+						<th>Mô tả</th>
+						<th>Người giao</th>
+						<th>Độ ưu tiên</th>
+						<th>Trạng thái</th>
+						<th>Ngày tạo</th>
+						<th>Hạn hoàn thành</th>
+						<th>Thao tác</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for task in tasks %}
+					<tr>
+						<td>
+							<a href="{{ url_for('pages.task_assignment_detail', task_id=task.id) }}" class="text-decoration-none fw-bold">
+								{{ task.id }}
+							</a>
+						</td>
+						<td>
+							<a href="{{ url_for('pages.task_assignment_detail', task_id=task.id) }}" class="text-decoration-none">
+								<strong>{{ task.title }}</strong>
+							</a>
+							{% if task.category %}
+								<br><small class="text-muted">{{ task.category }}</small>
+							{% endif %}
+						</td>
+						<td>
+							<span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ task.description }}">
+								{{ task.description }}
+							</span>
+						</td>
+						<td>{{ task.assigned_by }}</td>
+						<td>
+							{% if task.priority == 'high' %}
+								<span class="badge bg-danger">Cao</span>
+							{% elif task.priority == 'medium' %}
+								<span class="badge bg-warning">Trung bình</span>
+							{% else %}
+								<span class="badge bg-secondary">Thấp</span>
+							{% endif %}
+						</td>
+						<td>
+							{% if task.status == 'pending' %}
+								<span class="badge bg-warning">Chờ xử lý</span>
+							{% elif task.status == 'in_progress' %}
+								<span class="badge bg-info">Đang xử lý</span>
+							{% elif task.status == 'completed' %}
+								<span class="badge bg-success">Hoàn thành</span>
+							{% elif task.status == 'cancelled' %}
+								<span class="badge bg-secondary">Đã hủy</span>
+							{% endif %}
+						</td>
+						<td>{{ task.created_at[:10] }}</td>
+						<td>
+							{% if task.due_date %}
+								{{ task.due_date }}
+							{% else %}
+								<span class="text-muted">-</span>
+							{% endif %}
+						</td>
+						<td>
+							<div class="btn-group" role="group">
+								<!-- Cập nhật trạng thái -->
+								{% if task.status == 'pending' %}
+								<form method="POST" action="{{ url_for('pages.task_assignment_update_status', task_id=task.id) }}" class="d-inline">
+									<input type="hidden" name="status" value="in_progress">
+									<button type="submit" class="btn btn-sm btn-outline-primary">Bắt đầu</button>
+								</form>
+								{% elif task.status == 'in_progress' %}
+								<form method="POST" action="{{ url_for('pages.task_assignment_update_status', task_id=task.id) }}" class="d-inline">
+									<input type="hidden" name="status" value="completed">
+									<button type="submit" class="btn btn-sm btn-outline-success">Hoàn thành</button>
+								</form>
+								{% endif %}
+								
+								<!-- Bàn giao -->
+								{% if task.status == 'completed' %}
+								<a href="{{ url_for('pages.task_assignment_handover_form', task_id=task.id) }}" class="btn btn-sm btn-outline-info">
+									<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+										<path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+									</svg>
+									Bàn giao
+								</a>
+								{% endif %}
+								
+								<!-- Chỉnh sửa -->
+								<a href="{{ url_for('pages.task_assignment_edit_form', task_id=task.id) }}" class="btn btn-sm btn-outline-secondary">
+									Chỉnh sửa
+								</a>
+							</div>
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+
+		<!-- Phân trang -->
+		{% if total_pages > 1 %}
+		<nav aria-label="Phân trang">
+			<ul class="pagination justify-content-center">
+				{% if current_page > 1 %}
+				<li class="page-item">
+					<a class="page-link" href="?page={{ current_page - 1 }}&status={{ selected_status }}&priority={{ selected_priority }}&search={{ search_query }}">Trước</a>
+				</li>
+				{% endif %}
+				
+				{% for page_num in range(1, total_pages + 1) %}
+					{% if page_num == current_page %}
+					<li class="page-item active">
+						<span class="page-link">{{ page_num }}</span>
+					</li>
+					{% else %}
+					<li class="page-item">
+						<a class="page-link" href="?page={{ page_num }}&status={{ selected_status }}&priority={{ selected_priority }}&search={{ search_query }}">{{ page_num }}</a>
+					</li>
+					{% endif %}
+				{% endfor %}
+				
+				{% if current_page < total_pages %}
+				<li class="page-item">
+					<a class="page-link" href="?page={{ current_page + 1 }}&status={{ selected_status }}&priority={{ selected_priority }}&search={{ search_query }}">Sau</a>
+				</li>
+				{% endif %}
+			</ul>
+		</nav>
+		{% endif %}
+
+		{% else %}
+		<div class="text-center py-5">
+			<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="#6c757d" class="mb-3" viewBox="0 0 16 16">
+				<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+			</svg>
+			<h5 class="text-muted">Chưa có công việc nào</h5>
+			<p class="text-muted">Chưa có công việc nào được giao cho bạn hoặc không tìm thấy công việc phù hợp với bộ lọc.</p>
+		</div>
+		{% endif %}
+	</div>
+</div>
+
+{% endblock %}

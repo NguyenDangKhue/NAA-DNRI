@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+{% block title %}Nhận mẫu · LabManage{% endblock %}
+{% block content %}
+<h1 class="h4 mb-4">Nhận mẫu</h1>
+<div class="row g-4">
+	<div class="col-12 col-lg-5">
+		<div class="card shadow-sm border-0 rounded-4">
+			<div class="card-body p-4">
+				<h2 class="h6">Thêm mẫu mới</h2>
+				<form method="post" action="{{ url_for('pages.samples_create') }}">
+					<div class="mb-3">
+						<label class="form-label">Khách hàng gửi mẫu</label>
+						<select name="customer_id" class="form-select" required>
+							<option value="">Chọn khách hàng</option>
+							{% for c in customers %}
+							<option value="{{ c.id }}">{{ c.name }} ({{ c.organization }})</option>
+							{% endfor %}
+						</select>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Tên mẫu</label>
+						<input type="text" name="sample_name" class="form-control" required>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Mã hóa mẫu</label>
+						<input type="text" name="sample_code" class="form-control">
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Loại mẫu</label>
+						<input type="text" name="sample_type" class="form-control">
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Chỉ tiêu phân tích</label>
+						<input type="text" name="analysis_target" class="form-control">
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Ghi chú</label>
+						<textarea name="note" class="form-control" rows="3"></textarea>
+					</div>
+					<button type="submit" class="btn btn-primary">Thêm mẫu</button>
+				</form>
+			</div>
+		</div>
+		
+		<div class="card shadow-sm border-0 rounded-4 mt-4">
+			<div class="card-body p-4">
+				<h2 class="h6">Import hàng loạt</h2>
+				<p class="text-muted small mb-3">Tải file mẫu CSV và điền thông tin mẫu, sau đó upload lại.</p>
+				<div class="alert alert-info small">
+					<strong>Hướng dẫn:</strong><br>
+					• <strong>Chọn khách hàng</strong> trước khi tải file mẫu<br>
+					• <strong>Tên mẫu:</strong> Bắt buộc phải có<br>
+					• <strong>Loại mẫu:</strong> Thường là "Mẫu thực vật"<br>
+					• <strong>Chỉ tiêu phân tích:</strong> Thường là "Tất cả"<br>
+					• Các cột khác có thể để trống
+				</div>
+				<div class="mb-3">
+					<label class="form-label">Chọn khách hàng gửi mẫu</label>
+					<select id="template_customer_id" class="form-select">
+						<option value="">Chọn khách hàng trước khi tải file mẫu</option>
+						{% for c in customers %}
+						<option value="{{ c.id }}">{{ c.name }} ({{ c.organization }})</option>
+						{% endfor %}
+					</select>
+				</div>
+				<div class="d-flex gap-2 mb-3">
+					<button id="download_template_btn" class="btn btn-outline-primary btn-sm" disabled>Tải file mẫu</button>
+				</div>
+				<form method="post" action="{{ url_for('pages.samples_import') }}" enctype="multipart/form-data">
+					<div class="mb-3">
+						<label class="form-label">Chọn file CSV</label>
+						<input type="file" name="csv_file" class="form-control" accept=".csv" required>
+					</div>
+					<button type="submit" class="btn btn-success">Import CSV</button>
+				</form>
+			</div>
+		</div>
+	</div>
+	<div class="col-12 col-lg-7">
+		<div class="card shadow-sm border-0 rounded-4">
+			<div class="card-body p-4">
+				<div class="d-flex justify-content-between align-items-center mb-3">
+					<h2 class="h6 mb-0">Danh sách mẫu đã nhận</h2>
+					<div class="d-flex gap-2">
+						<!-- Filter by customer -->
+						<select id="filter_customer" class="form-select form-select-sm" style="width: auto;">
+							<option value="">Tất cả khách hàng</option>
+							{% for c in customers %}
+							<option value="{{ c.id }}" {% if selected_customer_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+							{% endfor %}
+						</select>
+						<!-- Export button -->
+						<a href="{{ url_for('pages.samples_export', customer_id=selected_customer_id) if selected_customer_id else url_for('pages.samples_export') }}" class="btn btn-outline-success btn-sm" id="exportBtn">
+							<i class="bi bi-download"></i> Xuất Excel
+						</a>
+					</div>
+				</div>
+				
+				<!-- Pagination info -->
+				<div class="d-flex justify-content-between align-items-center mb-3">
+					<small class="text-muted">
+						Hiển thị {{ samples|length }} / {{ total_count }} mẫu
+						{% if selected_customer_id %}
+						(đã lọc theo khách hàng)
+						{% endif %}
+					</small>
+					<div class="d-flex align-items-center gap-2">
+						<label class="form-label mb-0 small">Hiển thị:</label>
+						<select id="per_page_select" class="form-select form-select-sm" style="width: auto;">
+							<option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+							<option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
+							<option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+							<option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+						</select>
+					</div>
+				</div>
+				
+				<div class="table-responsive">
+					<table class="table align-middle">
+						<thead>
+							<tr>
+								<th>ID</th>
+								<th>Ngày nhận</th>
+								<th>Khách hàng</th>
+								<th>Tên mẫu</th>
+								<th>Mã hóa</th>
+								<th>Loại mẫu</th>
+								<th>Chỉ tiêu</th>
+								<th>Ghi chú</th>
+								<th class="text-end">Thao tác</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for s in samples %}
+							<tr>
+								<td>{{ s.id }}</td>
+								<td>{{ s.received_date }}</td>
+								<td>{{ customer_lookup.get(s.customer_id, 'N/A') }}</td>
+								<td>{{ s.sample_name }}</td>
+								<td>{{ s.sample_code }}</td>
+								<td>{{ s.sample_type }}</td>
+								<td>{{ s.analysis_target }}</td>
+								<td>{{ s.note }}</td>
+								<td class="text-end d-flex justify-content-end gap-2">
+									<a class="btn btn-sm btn-outline-primary" href="{{ url_for('pages.samples_edit', sample_id=s.id) }}">Sửa</a>
+									<form method="post" action="{{ url_for('pages.samples_delete', sample_id=s.id) }}">
+										<button type="submit" class="btn btn-sm btn-outline-danger">Xoá</button>
+									</form>
+								</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+				
+				<!-- Pagination -->
+				{% if total_pages > 1 %}
+				<nav aria-label="Pagination" class="mt-3">
+					<ul class="pagination pagination-sm justify-content-center">
+						<!-- Previous page -->
+						<li class="page-item {% if current_page <= 1 %}disabled{% endif %}">
+							<a class="page-link" href="{{ url_for('pages.samples_list', page=current_page-1, per_page=per_page, customer_id=selected_customer_id) if current_page > 1 else '#' }}">
+								<i class="bi bi-chevron-left"></i>
+							</a>
+						</li>
+						
+						<!-- Page numbers -->
+						{% set start_page = [1, current_page - 2]|max %}
+						{% set end_page = [total_pages, current_page + 2]|min %}
+						
+						{% if start_page > 1 %}
+						<li class="page-item">
+							<a class="page-link" href="{{ url_for('pages.samples_list', page=1, per_page=per_page, customer_id=selected_customer_id) }}">1</a>
+						</li>
+						{% if start_page > 2 %}
+						<li class="page-item disabled"><span class="page-link">...</span></li>
+						{% endif %}
+						{% endif %}
+						
+						{% for page_num in range(start_page, end_page + 1) %}
+						<li class="page-item {% if page_num == current_page %}active{% endif %}">
+							<a class="page-link" href="{{ url_for('pages.samples_list', page=page_num, per_page=per_page, customer_id=selected_customer_id) }}">{{ page_num }}</a>
+						</li>
+						{% endfor %}
+						
+						{% if end_page < total_pages %}
+						{% if end_page < total_pages - 1 %}
+						<li class="page-item disabled"><span class="page-link">...</span></li>
+						{% endif %}
+						<li class="page-item">
+							<a class="page-link" href="{{ url_for('pages.samples_list', page=total_pages, per_page=per_page, customer_id=selected_customer_id) }}">{{ total_pages }}</a>
+						</li>
+						{% endif %}
+						
+						<!-- Next page -->
+						<li class="page-item {% if current_page >= total_pages %}disabled{% endif %}">
+							<a class="page-link" href="{{ url_for('pages.samples_list', page=current_page+1, per_page=per_page, customer_id=selected_customer_id) if current_page < total_pages else '#' }}">
+								<i class="bi bi-chevron-right"></i>
+							</a>
+						</li>
+					</ul>
+				</nav>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+	const templateCustomerSelect = document.getElementById('template_customer_id');
+	const downloadBtn = document.getElementById('download_template_btn');
+	const filterCustomerSelect = document.getElementById('filter_customer');
+	const perPageSelect = document.getElementById('per_page_select');
+	const exportBtn = document.getElementById('exportBtn');
+	
+	// Template download functionality
+	templateCustomerSelect.addEventListener('change', function() {
+		if (this.value) {
+			downloadBtn.disabled = false;
+		} else {
+			downloadBtn.disabled = true;
+		}
+	});
+	
+	downloadBtn.addEventListener('click', function() {
+		const customerId = templateCustomerSelect.value;
+		if (customerId) {
+			const url = "{{ url_for('pages.samples_template') }}?customer_id=" + customerId;
+			window.location.href = url;
+		}
+	});
+	
+	// Export functionality using temp file approach
+	exportBtn.addEventListener('click', async function(e) {
+		e.preventDefault(); // Prevent default link behavior
+		
+		const customerId = filterCustomerSelect.value;
+		
+		console.log('Current filter value:', customerId);
+		
+		// Show loading state
+		const originalText = this.innerHTML;
+		this.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang chuẩn bị...';
+		this.disabled = true;
+		
+		try {
+			// Step 1: Save filtered data to temp file
+			let saveUrl = "{{ url_for('pages.samples_save_filtered') }}";
+			if (customerId && customerId !== '') {
+				saveUrl += "?customer_id=" + encodeURIComponent(customerId);
+			}
+			
+			console.log('Saving filtered data to:', saveUrl);
+			
+			const response = await fetch(saveUrl);
+			const result = await response.json();
+			
+			if (result.temp_file) {
+				console.log('Temp file created:', result.temp_file);
+				
+				// Step 2: Export from temp file
+				const exportUrl = "{{ url_for('pages.samples_export_from_temp', temp_filename='') }}" + result.temp_file;
+				console.log('Exporting from temp file:', exportUrl);
+				
+				// Download the file
+				window.location.href = exportUrl;
+			} else {
+				throw new Error('Không thể tạo file tạm');
+			}
+			
+		} catch (error) {
+			console.error('Export error:', error);
+			alert('Lỗi khi xuất file: ' + error.message);
+		}
+		
+		// Reset button
+		setTimeout(() => {
+			this.innerHTML = originalText;
+			this.disabled = false;
+		}, 2000);
+	});
+	
+	// Filter functionality
+	filterCustomerSelect.addEventListener('change', function() {
+		const customerId = this.value;
+		const perPage = perPageSelect.value;
+		const url = "{{ url_for('pages.samples_list') }}?customer_id=" + customerId + "&per_page=" + perPage;
+		
+		window.location.href = url;
+	});
+	
+	
+	// Per page functionality
+	perPageSelect.addEventListener('change', function() {
+		const customerId = filterCustomerSelect.value;
+		const perPage = this.value;
+		const url = "{{ url_for('pages.samples_list') }}?customer_id=" + customerId + "&per_page=" + perPage;
+		
+		window.location.href = url;
+	});
+	
+	// Update export button state based on current filter
+	function updateExportButtonState() {
+		// Get customer_id from current URL or from filter select
+		const urlParams = new URLSearchParams(window.location.search);
+		const customerId = urlParams.get('customer_id') || filterCustomerSelect.value;
+		
+		if (exportBtn) {
+			if (customerId && customerId !== '') {
+				exportBtn.title = 'Xuất dữ liệu đã lọc theo khách hàng';
+				exportBtn.classList.remove('btn-outline-success');
+				exportBtn.classList.add('btn-success');
+			} else {
+				exportBtn.title = 'Xuất tất cả dữ liệu';
+				exportBtn.classList.remove('btn-success');
+				exportBtn.classList.add('btn-outline-success');
+			}
+		}
+	}
+	
+	// Update button state on filter change
+	filterCustomerSelect.addEventListener('change', updateExportButtonState);
+	
+	// Initial button state
+	updateExportButtonState();
+	
+});
+</script>
+{% endblock %}

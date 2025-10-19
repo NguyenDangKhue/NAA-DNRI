@@ -1,0 +1,21 @@
+{
+  "next_id": 5,
+  "customers": [
+    {
+      "id": 3,
+      "name": "Anh Thắng",
+      "organization": "Phòng Nghiên cứu ứng dụng kỹ thuật hạt nhân và đồng vị",
+      "phone": "0123456789",
+      "address": "1 Nguyễn Tử Lực, Phường Lâm Viên - Đà Lạt, Lâm Đồng",
+      "note": ""
+    },
+    {
+      "id": 4,
+      "name": "Mẫu PT liên phòng thí nghiệm",
+      "organization": "IAEA",
+      "phone": "",
+      "address": "Úc",
+      "note": ""
+    }
+  ]
+}

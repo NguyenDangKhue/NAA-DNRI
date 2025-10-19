@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Đăng nhập · LabManage{% endblock %}
+{% block content %}
+<style>
+	/* Đổi màu phần trên cùng (navbar) sang màu xanh xám dịu */
+	.navbar.bg-dark {
+		background: linear-gradient(90deg, #e0e7ef 0%, #b5c6e0 100%) !important;
+	}
+	.navbar .navbar-brand.lab-header {
+		color: #2d3a4a !important;
+	}
+	.navbar .nav-link,
+	.navbar .btn-outline-light,
+	.navbar .nav-item.d-flex {
+		color: #2d3a4a !important;
+	}
+</style>
+<div class="row justify-content-center">
+	<div class="col-12 col-sm-10 col-md-8 col-lg-5">
+		<div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+			<div class="card-body p-4 p-md-5">
+				<h1 class="h4 fw-bold mb-3 text-center">Đăng nhập</h1>
+				<p class="text-secondary text-center mb-4">Quản lý mẫu trong phòng thí nghiệm</p>
+				<form method="post">
+					<div class="mb-3">
+						<label for="username" class="form-label">Tên đăng nhập</label>
+						<input type="text" class="form-control form-control-lg" id="username" name="username"  required>
+					</div>
+					<div class="mb-3">
+						<label for="password" class="form-label">Mật khẩu</label>
+						<input type="password" class="form-control form-control-lg" id="password" name="password"  required>
+					</div>
+					<button type="submit" class="btn btn-primary btn-lg w-100">Đăng nhập</button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}

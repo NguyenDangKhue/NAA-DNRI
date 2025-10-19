@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Quản lý khách hàng · LabManage{% endblock %}
+{% block content %}
+<h1 class="h4 mb-4">Quản lý khách hàng</h1>
+<div class="row g-4">
+	<div class="col-12 col-lg-5">
+		<div class="card shadow-sm border-0 rounded-4">
+			<div class="card-body p-4">
+				<h2 class="h6">Thêm khách hàng</h2>
+				<form method="post" action="{{ url_for('pages.customers_create') }}">
+					<div class="mb-3">
+						<label class="form-label">Tên khách hàng</label>
+						<input type="text" name="name" class="form-control" required>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Đơn vị trực thuộc</label>
+						<input type="text" name="organization" class="form-control">
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Số điện thoại liên hệ</label>
+						<input type="text" name="phone" class="form-control">
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Địa chỉ</label>
+						<input type="text" name="address" class="form-control">
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Ghi chú</label>
+						<textarea name="note" class="form-control" rows="3"></textarea>
+					</div>
+					<button type="submit" class="btn btn-primary">Thêm</button>
+				</form>
+			</div>
+		</div>
+	</div>
+	<div class="col-12 col-lg-7">
+		<div class="card shadow-sm border-0 rounded-4">
+			<div class="card-body p-4">
+				<div class="d-flex justify-content-between align-items-center mb-3">
+					<h2 class="h6 mb-0">Danh sách khách hàng</h2>
+					<a href="{{ url_for('pages.customers_export') }}" class="btn btn-outline-success btn-sm">
+						<i class="bi bi-download"></i> Xuất Excel
+					</a>
+				</div>
+				<div class="table-responsive">
+					<table class="table align-middle">
+						<thead>
+							<tr>
+								<th>Số thứ tự</th>
+								<th>Tên khách hàng</th>
+								<th>Đơn vị trực thuộc</th>
+								<th>Số điện thoại</th>
+								<th>Địa chỉ</th>
+								<th>Ghi chú</th>
+								<th class="text-end">Thao tác</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for c in customers %}
+							<tr>
+								<td>{{ c.id }}</td>
+								<td>{{ c.name }}</td>
+								<td>{{ c.organization }}</td>
+								<td>{{ c.phone }}</td>
+								<td>{{ c.address }}</td>
+								<td>{{ c.note }}</td>
+								<td class="text-end d-flex justify-content-end gap-2">
+									<a class="btn btn-sm btn-outline-primary" href="{{ url_for('pages.customers_edit', customer_id=c.id) }}">Sửa</a>
+									<form method="post" action="{{ url_for('pages.customers_delete', customer_id=c.id) }}">
+										<button type="submit" class="btn btn-sm btn-outline-danger">Xoá</button>
+									</form>
+								</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}

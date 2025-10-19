@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Đóng mẫu · LabManage{% endblock %}
+{% block content %}
+<h1 class="h4 mb-4">Đóng mẫu</h1>
+
+<style>
+	/* Card phối màu xanh teal, navy và trắng hiện đại */
+	.bg-section {
+		background: linear-gradient(135deg, #2ec4b6 0%, #233554 100%);
+	}
+	.card.feature-card {
+		transition: transform 0.18s cubic-bezier(.4,2,.6,1), box-shadow 0.18s;
+		border: none;
+		box-shadow: 0 2px 12px rgba(44, 62, 80, 0.08);
+	}
+	.card.feature-card:hover {
+		transform: translateY(-6px) scale(1.035);
+		box-shadow: 0 8px 32px rgba(44, 62, 80, 0.18);
+	}
+	.card.feature-card .card-body {
+		background: transparent;
+	}
+	.card.feature-card h2 {
+		color: #f8fafc;
+		font-weight: 700;
+		letter-spacing: 0.5px;
+	}
+	.card.feature-card p {
+		color: #e0f2fe !important;
+	}
+	.card.feature-card .icon-circle {
+		width: 44px;
+		height: 44px;
+		border-radius: 50%;
+		background: linear-gradient(135deg, #f8fafc 60%, #2ec4b6 100%);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-bottom: 1rem;
+		box-shadow: 0 2px 8px rgba(44, 62, 80, 0.10);
+	}
+	@media (max-width: 576px) {
+		.card.feature-card .card-body {
+			padding: 1.25rem !important;
+		}
+	}
+</style>
+
+<div class="row g-4">
+	{% for label, href, description in sub_modules %}
+	<div class="col-12 col-sm-6 col-lg-4">
+		<a href="{{ href }}" class="text-decoration-none">
+			<div class="card feature-card h-100 rounded-4 bg-section">
+				<div class="card-body p-4 d-flex flex-column align-items-start">
+					<div class="icon-circle mb-2">
+						{% if label == "Đóng mẫu thường" %}
+							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#2ec4b6" viewBox="0 0 16 16">
+								<path d="M2 2h12v12H2V2zm1 1v10h10V3H3zm2 2h6v6H5V5z"/>
+							</svg>
+						{% elif label == "Đóng lá dò" %}
+							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#233554" viewBox="0 0 16 16">
+								<path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 1.5A6.5 6.5 0 1 1 1.5 8 6.5 6.5 0 0 1 8 1.5z"/>
+								<path d="M8 4a4 4 0 1 0 0 8A4 4 0 0 0 8 4z"/>
+							</svg>
+						{% elif label == "Đóng mẫu chuẩn" %}
+							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#2ec4b6" viewBox="0 0 16 16">
+								<path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 1.5A6.5 6.5 0 1 1 1.5 8 6.5 6.5 0 0 1 8 1.5z"/>
+								<path d="M8 4v4l3 2" stroke="#233554" stroke-width="2" fill="none"/>
+							</svg>
+						{% else %}
+							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#2ec4b6" viewBox="0 0 16 16">
+								<circle cx="8" cy="8" r="7" stroke="#233554" stroke-width="2" fill="none"/>
+								<path d="M8 4v4l3 2" stroke="#233554" stroke-width="2" fill="none"/>
+							</svg>
+						{% endif %}
+					</div>
+					<h2 class="h5 mb-2">{{ label }}</h2>
+					<p class="small mb-0">{{ description }}</p>
+				</div>
+			</div>
+		</a>
+	</div>
+	{% endfor %}
+</div>
+{% endblock %}

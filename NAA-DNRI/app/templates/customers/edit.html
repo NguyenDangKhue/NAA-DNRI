@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Chỉnh sửa khách hàng · LabManage{% endblock %}
+{% block content %}
+<h1 class="h4 mb-4">Chỉnh sửa khách hàng</h1>
+<div class="row">
+	<div class="col-12 col-lg-6">
+		<div class="card shadow-sm border-0 rounded-4">
+			<div class="card-body p-4">
+				<form method="post" action="{{ url_for('pages.customers_update', customer_id=customer.id) }}">
+					<div class="mb-3">
+						<label class="form-label">Tên khách hàng</label>
+						<input type="text" name="name" class="form-control" value="{{ customer.name }}" required>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Đơn vị trực thuộc</label>
+						<input type="text" name="organization" class="form-control" value="{{ customer.organization }}">
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Số điện thoại liên hệ</label>
+						<input type="text" name="phone" class="form-control" value="{{ customer.phone }}">
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Địa chỉ</label>
+						<input type="text" name="address" class="form-control" value="{{ customer.address }}">
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Ghi chú</label>
+						<textarea name="note" class="form-control" rows="3">{{ customer.note }}</textarea>
+					</div>
+					<div class="d-flex gap-2">
+						<button type="submit" class="btn btn-primary">Lưu</button>
+						<a href="{{ url_for('pages.customers_list') }}" class="btn btn-outline-secondary">Huỷ</a>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}

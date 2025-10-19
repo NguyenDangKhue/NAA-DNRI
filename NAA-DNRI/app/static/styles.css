@@ -1,0 +1,14 @@
+/* Basic modern look */
+.bg-gradient {
+	background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+	min-height: 100vh;
+}
+
+.feature-card {
+	transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.feature-card:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 0.75rem 1.5rem rgba(0,0,0,.08);
+}
