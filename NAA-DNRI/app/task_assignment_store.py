@@ -1,11 +1,25 @@
 import json
 import os
+import uuid
 from typing import Dict, Any, List, Optional
 from datetime import datetime
+from werkzeug.utils import secure_filename
 
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
 TASK_ASSIGNMENTS_FILE = os.path.join(DATA_DIR, "task_assignments.json")
+UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads", "task_files")
+
+# Cấu hình file upload
+ALLOWED_EXTENSIONS = {
+    'images': {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff', 'webp'},
+    'documents': {'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf'},
+    'data': {'csv', 'json', 'xml', 'sql', 'dat'},
+    'archives': {'zip', 'rar', '7z', 'tar', 'gz'},
+    'code': {'py', 'js', 'html', 'css', 'java', 'cpp', 'c', 'php'}
+}
+
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
 
 def _ensure_store() -> None:
@@ -14,6 +28,33 @@ def _ensure_store() -> None:
     if not os.path.exists(TASK_ASSIGNMENTS_FILE):
         with open(TASK_ASSIGNMENTS_FILE, "w", encoding="utf-8") as f:
             json.dump({"task_assignments": []}, f, ensure_ascii=False, indent=2)
+
+
+def _ensure_upload_dir() -> None:
+    """Đảm bảo thư mục upload tồn tại"""
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+
+def _get_file_category(filename: str) -> str:
+    """Xác định loại file dựa trên extension"""
+    ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+    for category, extensions in ALLOWED_EXTENSIONS.items():
+        if ext in extensions:
+            return category
+    return 'other'
+
+
+def _is_allowed_file(filename: str) -> bool:
+    """Kiểm tra file có được phép upload không"""
+    if '.' not in filename:
+        return False
+    ext = filename.rsplit('.', 1)[1].lower()
+    return any(ext in extensions for extensions in ALLOWED_EXTENSIONS.values())
+
+
+def _get_file_size_mb(size_bytes: int) -> float:
+    """Chuyển đổi size từ bytes sang MB"""
+    return round(size_bytes / (1024 * 1024), 2)
 
 
 def load_task_assignments() -> List[Dict[str, Any]]:
@@ -156,6 +197,22 @@ def get_tasks_assigned_by_user(username: str) -> List[Dict[str, Any]]:
     return [task for task in tasks if task.get("assigned_by") == username]
 
 
+def is_workflow_completed(task: Dict[str, Any]) -> bool:
+    """Kiểm tra xem công việc đã hoàn thành toàn bộ quy trình chưa"""
+    workflow_stages = ["Nhận mẫu", "Đóng mẫu", "Chiếu mẫu", "Xử lý số liệu", "Kiểm tra và duyệt kết quả"]
+    handover_history = task.get("handover_history", [])
+    current_stage_index = len(handover_history)
+    
+    # Công việc hoàn thành khi đã bàn giao qua tất cả 5 giai đoạn (tức là sau giai đoạn 5)
+    return current_stage_index > len(workflow_stages) - 1
+
+
+def can_handover_task(task: Dict[str, Any]) -> bool:
+    """Kiểm tra xem công việc có thể bàn giao được không"""
+    # Không thể bàn giao nếu đã hoàn thành toàn bộ quy trình
+    return not is_workflow_completed(task)
+
+
 def handover_task(task_id: int, from_user: str, to_user: str, handover_note: str = None) -> bool:
     """Bàn giao công việc từ người này sang người khác"""
     try:
@@ -166,12 +223,17 @@ def handover_task(task_id: int, from_user: str, to_user: str, handover_note: str
                 if task.get("assigned_to") != from_user:
                     return False
                 
+                # Kiểm tra xem công việc có thể bàn giao được không
+                if not can_handover_task(task):
+                    return False
+                
                 # Thêm vào lịch sử bàn giao
                 handover_record = {
                     "from_user": from_user,
                     "to_user": to_user,
                     "handover_note": handover_note,
-                    "handover_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    "handover_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "is_self_handover": from_user == to_user  # Đánh dấu nếu bàn giao cho chính mình
                 }
                 
                 if "handover_history" not in task:
@@ -189,18 +251,25 @@ def handover_task(task_id: int, from_user: str, to_user: str, handover_note: str
                 
                 # Đếm số lần bàn giao để xác định công đoạn
                 handover_count = len(task.get("handover_history", []))
-                stage_names = ["Nhận mẫu", "Đóng mẫu", "Chiếu mẫu", "Kiểm tra", "Hoàn thiện"]
+                stage_names = ["Nhận mẫu", "Đóng mẫu", "Chiếu mẫu", "Xử lý số liệu", "Kiểm tra và duyệt kết quả"]
                 
                 if handover_count < len(stage_names):
                     stage = stage_names[handover_count]
                     task["title"] = f"{original_title} - Công đoạn {handover_count + 1}: {stage}"
                 else:
-                    task["title"] = f"{original_title} - Công đoạn {handover_count + 1}: Xử lý tiếp"
+                    task["title"] = f"{original_title} - Công đoạn {handover_count + 1}: Lưu kết quả"
                 
-                # Nếu công việc đã hoàn thành, reset về trạng thái pending để người nhận có thể tiếp tục
-                if task.get("status") == "completed":
-                    task["status"] = "pending"
-                    task["completion_note"] = handover_note or "Đã bàn giao từ người hoàn thành"
+                # Kiểm tra xem có phải sau giai đoạn cuối không
+                if handover_count > len(stage_names) - 1:
+                    # Đã hoàn thành giai đoạn cuối, đặt trạng thái completed
+                    task["status"] = "completed"
+                    task["completion_note"] = handover_note or "Đã hoàn thành toàn bộ quy trình"
+                    task["completed_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                else:
+                    # Nếu công việc đã hoàn thành trước đó, reset về trạng thái pending để người nhận có thể tiếp tục
+                    if task.get("status") == "completed":
+                        task["status"] = "pending"
+                        task["completion_note"] = handover_note or "Đã bàn giao từ người hoàn thành"
                 
                 save_task_assignments(tasks)
                 return True
@@ -287,6 +356,161 @@ def search_tasks(query: str, username: str = None) -> List[Dict[str, Any]]:
             results.append(task)
     
     return results
+
+
+def get_task_stage_info(task: Dict[str, Any]) -> Dict[str, Any]:
+    """Lấy thông tin về các giai đoạn của công việc"""
+    workflow_stages = ["Nhận mẫu", "Đóng mẫu", "Chiếu mẫu", "Xử lý số liệu", "Kiểm tra và duyệt kết quả"]
+    handover_history = task.get("handover_history", [])
+    
+    # Tính toán giai đoạn hiện tại
+    current_stage_index = len(handover_history)
+    if current_stage_index < len(workflow_stages):
+        current_stage = workflow_stages[current_stage_index]
+    elif current_stage_index == len(workflow_stages):
+        current_stage = "Lưu kết quả"
+    else:
+        current_stage = f"Công đoạn {current_stage_index + 1}"
+    
+    # Tạo danh sách các giai đoạn đã trải qua
+    completed_stages = []
+    
+    # Thêm giai đoạn khởi tạo
+    completed_stages.append({
+        "stage": "Khởi tạo",
+        "user": task.get("assigned_by", "Unknown"),
+        "date": task.get("created_at", ""),
+        "status": "completed"
+    })
+    
+    # Thêm các giai đoạn đã bàn giao
+    for i, handover in enumerate(handover_history):
+        if i < len(workflow_stages):
+            stage_name = workflow_stages[i]
+        elif i == len(workflow_stages):
+            stage_name = "Lưu kết quả"
+        else:
+            stage_name = f"Công đoạn {i+1}"
+        
+        completed_stages.append({
+            "stage": stage_name,
+            "user": handover.get("from_user", "Unknown"),
+            "date": handover.get("handover_date", ""),
+            "status": "completed",
+            "handover_to": handover.get("to_user", "Unknown"),
+            "note": handover.get("handover_note", "")
+        })
+    
+    return {
+        "completed_stages": completed_stages,
+        "current_stage": current_stage,
+        "current_stage_index": current_stage_index,
+        "total_stages": len(workflow_stages),
+        "progress_percentage": min(100, (current_stage_index / len(workflow_stages)) * 100) if workflow_stages else 0
+    }
+
+
+def upload_task_file(task_id: int, file, stage_name: str, uploaded_by: str, description: str = None) -> Dict[str, Any]:
+    """Upload file cho một công đoạn của công việc"""
+    try:
+        _ensure_upload_dir()
+        
+        # Kiểm tra file
+        if not file or not file.filename:
+            return {"success": False, "error": "Không có file được chọn"}
+        
+        if not _is_allowed_file(file.filename):
+            return {"success": False, "error": "Loại file không được hỗ trợ"}
+        
+        # Kiểm tra kích thước file
+        file.seek(0, 2)  # Di chuyển đến cuối file
+        file_size = file.tell()
+        file.seek(0)  # Quay lại đầu file
+        
+        if file_size > MAX_FILE_SIZE:
+            return {"success": False, "error": f"File quá lớn. Kích thước tối đa: {MAX_FILE_SIZE // (1024*1024)}MB"}
+        
+        # Tạo tên file an toàn
+        original_filename = secure_filename(file.filename)
+        file_ext = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else ''
+        unique_filename = f"{uuid.uuid4().hex}.{file_ext}"
+        
+        # Tạo đường dẫn lưu trữ
+        task_dir = os.path.join(UPLOAD_DIR, str(task_id))
+        os.makedirs(task_dir, exist_ok=True)
+        file_path = os.path.join(task_dir, unique_filename)
+        
+        # Lưu file
+        file.save(file_path)
+        
+        # Tạo metadata file
+        file_info = {
+            "id": str(uuid.uuid4()),
+            "original_filename": original_filename,
+            "stored_filename": unique_filename,
+            "file_path": file_path,
+            "file_size": file_size,
+            "file_size_mb": _get_file_size_mb(file_size),
+            "file_category": _get_file_category(original_filename),
+            "stage_name": stage_name,
+            "uploaded_by": uploaded_by,
+            "uploaded_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "description": description or ""
+        }
+        
+        # Cập nhật task với file info
+        tasks = load_task_assignments()
+        for task in tasks:
+            if task.get("id") == task_id:
+                if "files" not in task:
+                    task["files"] = []
+                task["files"].append(file_info)
+                task["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                save_task_assignments(tasks)
+                return {"success": True, "file_info": file_info}
+        
+        return {"success": False, "error": "Không tìm thấy công việc"}
+        
+    except Exception as e:
+        return {"success": False, "error": f"Lỗi khi upload file: {str(e)}"}
+
+
+def get_task_files(task_id: int, stage_name: str = None) -> List[Dict[str, Any]]:
+    """Lấy danh sách file của một công việc"""
+    tasks = load_task_assignments()
+    for task in tasks:
+        if task.get("id") == task_id:
+            files = task.get("files", [])
+            if stage_name:
+                return [f for f in files if f.get("stage_name") == stage_name]
+            return files
+    return []
+
+
+def delete_task_file(task_id: int, file_id: str) -> bool:
+    """Xóa file của một công việc"""
+    try:
+        tasks = load_task_assignments()
+        for task in tasks:
+            if task.get("id") == task_id:
+                files = task.get("files", [])
+                for i, file_info in enumerate(files):
+                    if file_info.get("id") == file_id:
+                        # Xóa file vật lý
+                        file_path = file_info.get("file_path")
+                        if file_path and os.path.exists(file_path):
+                            os.remove(file_path)
+                        
+                        # Xóa khỏi danh sách
+                        files.pop(i)
+                        task["files"] = files
+                        task["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        save_task_assignments(tasks)
+                        return True
+        return False
+    except Exception as e:
+        print(f"Error deleting file: {e}")
+        return False
 
 
 def export_task_assignments_to_excel(username: str = None) -> str:

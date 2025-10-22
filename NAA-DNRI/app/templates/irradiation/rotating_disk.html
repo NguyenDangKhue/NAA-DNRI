@@ -11,83 +11,162 @@
 </div>
 
 <div class="row g-4">
-	<div class="col-12 col-lg-6">
+	<div class="col-12 col-lg-8">
 		<div class="card shadow-sm border-0 rounded-4">
 			<div class="card-body p-4">
-				<h2 class="h6">Thêm chiếu mẫu mâm quay</h2>
-				<form method="post" action="{{ url_for('pages.irradiation_rotating_disk_add') }}">
-					<div class="mb-3">
-						<label class="form-label">Mã mẫu</label>
-						<input type="text" name="sample_code" class="form-control" required>
+				<h2 class="h6 mb-4">
+					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+						<path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+					</svg>
+					Thêm lần chiếu mẫu mới
+				</h2>
+				<form method="post" action="{{ url_for('pages.irradiation_rotating_disk_add') }}" id="irradiationForm">
+					<!-- Thông tin chung cho lần chiếu -->
+					<div class="row g-3 mb-4">
+						<div class="col-md-6">
+							<label class="form-label">Thời gian bắt đầu chiếu <span class="text-danger">*</span></label>
+							<input type="datetime-local" name="start_time" class="form-control" required>
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">Thời gian chiếu (phút) <span class="text-danger">*</span></label>
+							<input type="number" name="irradiation_time" class="form-control" step="0.1" min="0.1" required>
+						</div>
 					</div>
-					<div class="mb-3">
-						<label class="form-label">Tên mẫu</label>
-						<input type="text" name="sample_name" class="form-control" required>
+					<div class="row g-3 mb-4">
+						<div class="col-md-6">
+							<label class="form-label">Công suất (kW) <span class="text-danger">*</span></label>
+							<input type="number" name="power" class="form-control" step="0.1" min="0.1" required>
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">Ghi chú lần chiếu</label>
+							<input type="text" name="batch_note" class="form-control" placeholder="Ghi chú chung cho lần chiếu này...">
+						</div>
 					</div>
-					<div class="mb-3">
-						<label class="form-label">Vị trí mâm quay</label>
-						<select name="disk_position" class="form-select" required>
-							<option value="">Chọn vị trí</option>
-							<option value="1">Vị trí 1</option>
-							<option value="2">Vị trí 2</option>
-							<option value="3">Vị trí 3</option>
-							<option value="4">Vị trí 4</option>
-							<option value="5">Vị trí 5</option>
-							<option value="6">Vị trí 6</option>
-						</select>
+
+					<!-- Danh sách mẫu trong lần chiếu -->
+					<div class="mb-4">
+						<div class="d-flex justify-content-between align-items-center mb-3">
+							<h5 class="mb-0">Danh sách mẫu trong lần chiếu</h5>
+							<button type="button" class="btn btn-outline-primary btn-sm" onclick="addSampleRow()">
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+									<path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+								</svg>
+								Thêm mẫu
+							</button>
+						</div>
+						
+						<div id="samplesContainer">
+							<!-- Mẫu đầu tiên -->
+							<div class="sample-row border rounded p-3 mb-3" data-sample-index="0">
+								<div class="row g-3">
+									<div class="col-md-4">
+										<label class="form-label">Mã mẫu <span class="text-danger">*</span></label>
+										<input type="text" name="samples[0][sample_code]" class="form-control" required>
+									</div>
+									<div class="col-md-4">
+										<label class="form-label">Tên mẫu <span class="text-danger">*</span></label>
+										<input type="text" name="samples[0][sample_name]" class="form-control" required>
+									</div>
+									<div class="col-md-3">
+										<label class="form-label">Vị trí mâm quay <span class="text-danger">*</span></label>
+										<select name="samples[0][disk_position]" class="form-select" required>
+											<option value="">Chọn vị trí</option>
+											<option value="1">Vị trí 1</option>
+											<option value="2">Vị trí 2</option>
+											<option value="3">Vị trí 3</option>
+											<option value="4">Vị trí 4</option>
+											<option value="5">Vị trí 5</option>
+											<option value="6">Vị trí 6</option>
+										</select>
+									</div>
+									<div class="col-md-1 d-flex align-items-end">
+										<button type="button" class="btn btn-outline-danger btn-sm" onclick="removeSampleRow(this)" disabled>
+											<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+												<path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+												<path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+											</svg>
+										</button>
+									</div>
+								</div>
+							</div>
+						</div>
 					</div>
-					<div class="mb-3">
-						<label class="form-label">Thời gian chiếu (phút)</label>
-						<input type="number" name="irradiation_time" class="form-control" step="0.1" required>
+
+					<div class="d-flex justify-content-between">
+						<button type="button" class="btn btn-outline-secondary" onclick="resetForm()">Làm mới</button>
+						<button type="submit" class="btn btn-primary">
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+								<path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+							</svg>
+							Thêm lần chiếu mẫu
+						</button>
 					</div>
-					<div class="mb-3">
-						<label class="form-label">Công suất (kW)</label>
-						<input type="number" name="power" class="form-control" step="0.1" required>
-					</div>
-					<div class="mb-3">
-						<label class="form-label">Ghi chú</label>
-						<textarea name="note" class="form-control" rows="3"></textarea>
-					</div>
-					<button type="submit" class="btn btn-primary">Thêm chiếu mẫu</button>
 				</form>
 			</div>
 		</div>
 	</div>
 	
-	<div class="col-12 col-lg-6">
+	<div class="col-12 col-lg-4">
 		<div class="card shadow-sm border-0 rounded-4">
 			<div class="card-body p-4">
-				<h2 class="h6">Danh sách chiếu mẫu mâm quay</h2>
+				<h2 class="h6 mb-3">Thông tin lần chiếu</h2>
+				<div id="batchInfo" class="text-muted">
+					<p class="mb-2"><strong>Thời gian bắt đầu:</strong> <span id="startTimeDisplay">Chưa chọn</span></p>
+					<p class="mb-2"><strong>Thời gian chiếu:</strong> <span id="irradiationTimeDisplay">Chưa nhập</span></p>
+					<p class="mb-2"><strong>Thời gian kết thúc:</strong> <span id="endTimeDisplay">Chưa tính</span></p>
+					<p class="mb-2"><strong>Công suất:</strong> <span id="powerDisplay">Chưa nhập</span></p>
+					<p class="mb-2"><strong>Số mẫu:</strong> <span id="sampleCount">1</span></p>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Danh sách các lần chiếu đã thực hiện -->
+<div class="row mt-4">
+	<div class="col-12">
+		<div class="card shadow-sm border-0 rounded-4">
+			<div class="card-body p-4">
+				<h2 class="h6 mb-3">Lịch sử chiếu mẫu mâm quay</h2>
 				<div class="table-responsive">
 					<table class="table table-hover">
 						<thead>
 							<tr>
-								<th>Mã mẫu</th>
-								<th>Tên mẫu</th>
-								<th>Vị trí</th>
-								<th>Thời gian</th>
+								<th>Lần chiếu</th>
+								<th>Thời gian bắt đầu</th>
+								<th>Thời gian chiếu</th>
+								<th>Thời gian kết thúc</th>
 								<th>Công suất</th>
+								<th>Số mẫu</th>
 								<th>Thao tác</th>
 							</tr>
 						</thead>
 						<tbody>
-							{% for irradiation in irradiations %}
+							{% for batch in irradiation_batches %}
 							<tr>
-								<td>{{ irradiation.sample_code }}</td>
-								<td>{{ irradiation.sample_name }}</td>
-								<td>{{ irradiation.disk_position }}</td>
-								<td>{{ irradiation.irradiation_time }} phút</td>
-								<td>{{ irradiation.power }} kW</td>
 								<td>
-									<button class="btn btn-sm btn-outline-primary">Sửa</button>
-									<form method="post" action="{{ url_for('pages.irradiation_rotating_disk_delete', irradiation_id=irradiation.id) }}" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa chiếu mẫu này?')">
+									<strong>#{{ batch.batch_id }}</strong>
+									{% if batch.batch_note %}
+									<br><small class="text-muted">{{ batch.batch_note }}</small>
+									{% endif %}
+								</td>
+								<td>{{ batch.start_time[:16] }}</td>
+								<td>{{ batch.irradiation_time }} phút</td>
+								<td>{{ batch.end_time[:16] }}</td>
+								<td>{{ batch.power }} kW</td>
+								<td>
+									<span class="badge bg-primary">{{ batch.sample_count }}</span>
+								</td>
+								<td>
+									<button class="btn btn-sm btn-outline-info" onclick="viewBatchDetails({{ batch.batch_id }})">Chi tiết</button>
+									<form method="post" action="{{ url_for('pages.irradiation_rotating_disk_delete_batch', batch_id=batch.batch_id) }}" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa lần chiếu này?')">
 										<button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
 									</form>
 								</td>
 							</tr>
 							{% else %}
 							<tr>
-								<td colspan="6" class="text-center text-muted">Chưa có dữ liệu</td>
+								<td colspan="7" class="text-center text-muted">Chưa có dữ liệu</td>
 							</tr>
 							{% endfor %}
 						</tbody>
@@ -97,4 +176,160 @@
 		</div>
 	</div>
 </div>
+
+<script>
+let sampleIndex = 0;
+
+// Cập nhật thông tin lần chiếu
+function updateBatchInfo() {
+	const startTime = document.querySelector('input[name="start_time"]').value;
+	const irradiationTime = document.querySelector('input[name="irradiation_time"]').value;
+	const power = document.querySelector('input[name="power"]').value;
+	const sampleCount = document.querySelectorAll('.sample-row').length;
+	
+	document.getElementById('startTimeDisplay').textContent = startTime ? new Date(startTime).toLocaleString('vi-VN') : 'Chưa chọn';
+	document.getElementById('irradiationTimeDisplay').textContent = irradiationTime ? irradiationTime + ' phút' : 'Chưa nhập';
+	document.getElementById('powerDisplay').textContent = power ? power + ' kW' : 'Chưa nhập';
+	document.getElementById('sampleCount').textContent = sampleCount;
+	
+	// Tính thời gian kết thúc
+	if (startTime && irradiationTime) {
+		const start = new Date(startTime);
+		const end = new Date(start.getTime() + (parseFloat(irradiationTime) * 60000));
+		document.getElementById('endTimeDisplay').textContent = end.toLocaleString('vi-VN');
+	} else {
+		document.getElementById('endTimeDisplay').textContent = 'Chưa tính';
+	}
+}
+
+// Thêm mẫu mới
+function addSampleRow() {
+	sampleIndex++;
+	const container = document.getElementById('samplesContainer');
+	const newRow = document.createElement('div');
+	newRow.className = 'sample-row border rounded p-3 mb-3';
+	newRow.setAttribute('data-sample-index', sampleIndex);
+	
+	newRow.innerHTML = `
+		<div class="row g-3">
+			<div class="col-md-4">
+				<label class="form-label">Mã mẫu <span class="text-danger">*</span></label>
+				<input type="text" name="samples[${sampleIndex}][sample_code]" class="form-control" required>
+			</div>
+			<div class="col-md-4">
+				<label class="form-label">Tên mẫu <span class="text-danger">*</span></label>
+				<input type="text" name="samples[${sampleIndex}][sample_name]" class="form-control" required>
+			</div>
+			<div class="col-md-3">
+				<label class="form-label">Vị trí mâm quay <span class="text-danger">*</span></label>
+				<select name="samples[${sampleIndex}][disk_position]" class="form-select" required>
+					<option value="">Chọn vị trí</option>
+					<option value="1">Vị trí 1</option>
+					<option value="2">Vị trí 2</option>
+					<option value="3">Vị trí 3</option>
+					<option value="4">Vị trí 4</option>
+					<option value="5">Vị trí 5</option>
+					<option value="6">Vị trí 6</option>
+				</select>
+			</div>
+			<div class="col-md-1 d-flex align-items-end">
+				<button type="button" class="btn btn-outline-danger btn-sm" onclick="removeSampleRow(this)">
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+						<path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+						<path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+					</svg>
+				</button>
+			</div>
+		</div>
+	`;
+	
+	container.appendChild(newRow);
+	updateBatchInfo();
+	
+	// Enable delete buttons for all rows
+	document.querySelectorAll('.sample-row button[onclick="removeSampleRow(this)"]').forEach(btn => {
+		btn.disabled = false;
+	});
+}
+
+// Xóa mẫu
+function removeSampleRow(button) {
+	const sampleRow = button.closest('.sample-row');
+	const container = document.getElementById('samplesContainer');
+	
+	if (container.children.length > 1) {
+		sampleRow.remove();
+		updateBatchInfo();
+		
+		// Disable delete button if only one row left
+		if (container.children.length === 1) {
+			container.querySelector('button[onclick="removeSampleRow(this)"]').disabled = true;
+		}
+	}
+}
+
+// Làm mới form
+function resetForm() {
+	if (confirm('Bạn có chắc chắn muốn làm mới form? Tất cả dữ liệu sẽ bị mất.')) {
+		document.getElementById('irradiationForm').reset();
+		document.getElementById('samplesContainer').innerHTML = `
+			<div class="sample-row border rounded p-3 mb-3" data-sample-index="0">
+				<div class="row g-3">
+					<div class="col-md-4">
+						<label class="form-label">Mã mẫu <span class="text-danger">*</span></label>
+						<input type="text" name="samples[0][sample_code]" class="form-control" required>
+					</div>
+					<div class="col-md-4">
+						<label class="form-label">Tên mẫu <span class="text-danger">*</span></label>
+						<input type="text" name="samples[0][sample_name]" class="form-control" required>
+					</div>
+					<div class="col-md-3">
+						<label class="form-label">Vị trí mâm quay <span class="text-danger">*</span></label>
+						<select name="samples[0][disk_position]" class="form-select" required>
+							<option value="">Chọn vị trí</option>
+							<option value="1">Vị trí 1</option>
+							<option value="2">Vị trí 2</option>
+							<option value="3">Vị trí 3</option>
+							<option value="4">Vị trí 4</option>
+							<option value="5">Vị trí 5</option>
+							<option value="6">Vị trí 6</option>
+						</select>
+					</div>
+					<div class="col-md-1 d-flex align-items-end">
+						<button type="button" class="btn btn-outline-danger btn-sm" onclick="removeSampleRow(this)" disabled>
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+								<path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+								<path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+							</svg>
+						</button>
+					</div>
+				</div>
+			</div>
+		`;
+		sampleIndex = 0;
+		updateBatchInfo();
+	}
+}
+
+// Xem chi tiết lần chiếu
+function viewBatchDetails(batchId) {
+	// TODO: Implement modal or redirect to detail page
+	alert('Tính năng xem chi tiết sẽ được implement sau');
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+	// Update batch info when form fields change
+	document.querySelectorAll('input[name="start_time"], input[name="irradiation_time"], input[name="power"]').forEach(input => {
+		input.addEventListener('input', updateBatchInfo);
+	});
+	
+	// Set default start time to now
+	const now = new Date();
+	now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+	document.querySelector('input[name="start_time"]').value = now.toISOString().slice(0, 16);
+	
+	updateBatchInfo();
+});
+</script>
 {% endblock %}
