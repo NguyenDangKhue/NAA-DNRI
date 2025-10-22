@@ -112,13 +112,19 @@
 							<label class="form-label">Người nhận bàn giao <span class="text-danger">*</span></label>
 							<select name="to_user" class="form-select" required>
 								<option value="">-- Chọn người nhận bàn giao --</option>
+								<option value="{{ task.assigned_to }}" class="text-primary">
+									{{ task.assigned_to }} (Tiếp tục đảm nhận công đoạn tiếp theo)
+								</option>
 								{% for user in all_users %}
 									{% if user.username != task.assigned_to %}
 									<option value="{{ user.username }}">{{ user.username }}</option>
 									{% endif %}
 								{% endfor %}
 							</select>
-							<div class="form-text">Không thể bàn giao cho chính mình</div>
+							<div class="form-text">
+								<span class="text-primary">• Chọn chính mình để tiếp tục đảm nhận công đoạn tiếp theo</span><br>
+								<span class="text-secondary">• Chọn người khác để bàn giao công việc</span>
+							</div>
 						</div>
 						
 						<div class="col-12">
@@ -128,11 +134,15 @@
 						</div>
 						
 						<div class="col-12">
-							<div class="alert alert-warning">
+							<div class="alert alert-info">
 								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2" viewBox="0 0 16 16">
 									<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
 								</svg>
-								<strong>Lưu ý:</strong> Sau khi bàn giao, công việc sẽ được chuyển cho người nhận và bạn sẽ không còn quyền chỉnh sửa trừ khi được bàn giao lại.
+								<strong>Lưu ý:</strong> 
+								<ul class="mb-0 mt-2">
+									<li>Nếu chọn <strong>chính mình</strong>: Bạn sẽ tiếp tục đảm nhận công đoạn tiếp theo của công việc</li>
+									<li>Nếu chọn <strong>người khác</strong>: Công việc sẽ được chuyển cho người đó và bạn sẽ không còn quyền chỉnh sửa trừ khi được bàn giao lại</li>
+								</ul>
 							</div>
 						</div>
 						
@@ -170,13 +180,22 @@
 				<div class="border-bottom pb-3 mb-3">
 					<div class="d-flex justify-content-between align-items-start">
 						<div>
-							<strong>{{ handover.from_user }} → {{ handover.to_user }}</strong>
-							<div class="text-muted small">{{ handover.handover_date[:16] }}</div>
+							{% if handover.from_user == handover.to_user %}
+								<strong class="text-primary">
+									{{ handover.from_user }} 
+									<span class="badge bg-primary ms-2">Tiếp tục đảm nhận</span>
+								</strong>
+								<div class="text-muted small">{{ handover.handover_date[:16] }}</div>
+								<small class="text-primary">Đã tiếp tục đảm nhận công đoạn tiếp theo</small>
+							{% else %}
+								<strong>{{ handover.from_user }} → {{ handover.to_user }}</strong>
+								<div class="text-muted small">{{ handover.handover_date[:16] }}</div>
+							{% endif %}
 						</div>
 					</div>
 					{% if handover.handover_note %}
-					<div class="mt-2 p-2 bg-light rounded">
-						<small class="text-muted">{{ handover.handover_note }}</small>
+					<div class="mt-2 p-2 {% if handover.from_user == handover.to_user %}bg-primary bg-opacity-10{% else %}bg-light{% endif %} rounded">
+						<small class="{% if handover.from_user == handover.to_user %}text-primary{% else %}text-muted{% endif %}">{{ handover.handover_note }}</small>
 					</div>
 					{% endif %}
 				</div>

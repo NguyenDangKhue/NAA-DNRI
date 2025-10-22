@@ -2,6 +2,63 @@
 {% block title %}Danh sách công việc · LabManage{% endblock %}
 {% block content %}
 
+<style>
+	/* Animation cho collapse */
+	.collapse {
+		transition: height 0.3s ease-in-out;
+		overflow: hidden;
+	}
+	
+	.collapse:not(.show) {
+		height: 0;
+	}
+	
+	.collapse.show {
+		height: auto;
+	}
+	
+	/* Style cho nút toggle của từng công việc */
+	[id^="taskToggleIcon"] {
+		font-weight: bold;
+		font-size: 16px;
+		transition: transform 0.2s ease;
+	}
+	
+	.btn-outline-primary:hover [id^="taskToggleIcon"] {
+		transform: scale(1.1);
+	}
+</style>
+
+<script>
+	// JavaScript để xử lý progress bar
+	document.addEventListener('DOMContentLoaded', function() {
+		const progressBars = document.querySelectorAll('.progress-bar[data-width]');
+		progressBars.forEach(function(bar) {
+			const width = bar.getAttribute('data-width');
+			bar.style.width = width + '%';
+		});
+	});
+	
+	// JavaScript để toggle chi tiết giai đoạn cho từng công việc
+	function toggleTaskDetails(taskId) {
+		const container = document.getElementById('taskDetailsContainer' + taskId);
+		const icon = document.getElementById('taskToggleIcon' + taskId);
+		const text = document.getElementById('taskToggleText' + taskId);
+		
+		if (container.classList.contains('show')) {
+			// Đóng
+			container.classList.remove('show');
+			icon.textContent = '+';
+			text.textContent = 'Chi tiết';
+		} else {
+			// Mở
+			container.classList.add('show');
+			icon.textContent = '−';
+			text.textContent = 'Thu gọn';
+		}
+	}
+</script>
+
 <div class="d-flex align-items-center justify-content-between mb-4">
 	<div class="fw-semibold text-primary-emphasis" style="font-size: 1.05rem;">
 		<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#2ec4b6" class="me-1 mb-1" viewBox="0 0 16 16">
@@ -85,88 +142,167 @@
 	</div>
 	<div class="card-body">
 		{% if tasks %}
-		<div class="table-responsive">
-			<table class="table table-hover">
-				<thead class="table-light">
-					<tr>
-						<th>ID</th>
-						<th>Tiêu đề</th>
-						<th>Mô tả</th>
-						<th>Người được giao</th>
-						<th>Người giao</th>
-						<th>Độ ưu tiên</th>
-						<th>Trạng thái</th>
-						<th>Ngày tạo</th>
-						<th>Hạn hoàn thành</th>
-						<th>Thao tác</th>
-					</tr>
-				</thead>
-				<tbody>
-					{% for task in tasks %}
-					<tr>
-						<td>
-							<a href="{{ url_for('pages.task_assignment_detail', task_id=task.id) }}" class="text-decoration-none fw-bold">
-								{{ task.id }}
-							</a>
-						</td>
-						<td>
+		{% for task in tasks %}
+		<div class="card mb-3">
+			<div class="card-header">
+				<div class="d-flex align-items-center justify-content-between">
+					<div>
+						<h6 class="mb-0">
 							<a href="{{ url_for('pages.task_assignment_detail', task_id=task.id) }}" class="text-decoration-none">
-								<strong>{{ task.title }}</strong>
+								Công việc #{{ task.id }}: {{ task.title }}
 							</a>
-							{% if task.category %}
-								<br><small class="text-muted">{{ task.category }}</small>
-							{% endif %}
-						</td>
-						<td>
-							<span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ task.description }}">
-								{{ task.description }}
-							</span>
-						</td>
-						<td>{{ task.assigned_to }}</td>
-						<td>{{ task.assigned_by }}</td>
-						<td>
-							{% if task.priority == 'high' %}
-								<span class="badge bg-danger">Cao</span>
-							{% elif task.priority == 'medium' %}
-								<span class="badge bg-warning">Trung bình</span>
-							{% else %}
-								<span class="badge bg-secondary">Thấp</span>
-							{% endif %}
-						</td>
-						<td>
-							{% if task.status == 'pending' %}
-								<span class="badge bg-warning">Chờ xử lý</span>
-							{% elif task.status == 'in_progress' %}
-								<span class="badge bg-info">Đang xử lý</span>
-							{% elif task.status == 'completed' %}
-								<span class="badge bg-success">Hoàn thành</span>
-							{% elif task.status == 'cancelled' %}
-								<span class="badge bg-secondary">Đã hủy</span>
-							{% endif %}
-						</td>
-						<td>{{ task.created_at[:10] }}</td>
-						<td>
-							{% if task.due_date %}
-								{{ task.due_date }}
-							{% else %}
-								<span class="text-muted">-</span>
-							{% endif %}
-						</td>
-						<td>
-							<div class="btn-group" role="group">
-								<a href="{{ url_for('pages.task_assignment_edit_form', task_id=task.id) }}" class="btn btn-sm btn-outline-primary">
-									Chỉnh sửa
-								</a>
-								<button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDelete({{ task.id }})">
-									Xóa
-								</button>
+						</h6>
+						<div class="row mt-2">
+							<div class="col-md-2">
+								<small class="text-muted">Người giao: <strong>{{ task.assigned_by }}</strong></small>
 							</div>
-						</td>
-					</tr>
-					{% endfor %}
-				</tbody>
-			</table>
+							<div class="col-md-2">
+								<small class="text-muted">Người nhận: <strong>{{ task.assigned_to }}</strong></small>
+							</div>
+							<div class="col-md-2">
+								<small class="text-muted">Độ ưu tiên: 
+									{% if task.priority == 'high' %}
+										<span class="badge bg-danger">Cao</span>
+									{% elif task.priority == 'medium' %}
+										<span class="badge bg-warning">Trung bình</span>
+									{% else %}
+										<span class="badge bg-secondary">Thấp</span>
+									{% endif %}
+								</small>
+							</div>
+							<div class="col-md-2">
+								<small class="text-muted">Trạng thái: 
+									{% if task.status == 'pending' %}
+										<span class="badge bg-warning">Chờ xử lý</span>
+									{% elif task.status == 'in_progress' %}
+										<span class="badge bg-info">Đang xử lý</span>
+									{% elif task.status == 'completed' %}
+										<span class="badge bg-success">Hoàn thành</span>
+									{% elif task.status == 'cancelled' %}
+										<span class="badge bg-secondary">Đã hủy</span>
+									{% endif %}
+								</small>
+							</div>
+							<div class="col-md-2">
+								<small class="text-muted">Giai đoạn: <span class="badge bg-primary">{{ task.stage_info.current_stage }}</span></small>
+							</div>
+							<div class="col-md-2">
+								<small class="text-muted">Tiến độ: {{ task.stage_info.progress_percentage|round|int }}%</small>
+							</div>
+						</div>
+						<div class="row mt-1">
+							<div class="col-md-3">
+								<small class="text-muted">Tạo: {{ task.created_at[:10] }}</small>
+							</div>
+							<div class="col-md-3">
+								<small class="text-muted">
+									Hạn: {% if task.due_date %}{{ task.due_date }}{% else %}-{% endif %}
+								</small>
+							</div>
+							<div class="col-md-3">
+								<small class="text-muted">
+									Danh mục: {% if task.category %}{{ task.category }}{% else %}-{% endif %}
+								</small>
+							</div>
+							<div class="col-md-3">
+								<small class="text-muted">Cập nhật: {{ task.updated_at[:10] }}</small>
+							</div>
+						</div>
+					</div>
+					<div class="d-flex align-items-center gap-2">
+						<button type="button" class="btn btn-outline-primary btn-sm" data-task-id="{{ task.id }}" onclick="toggleTaskDetails(this.dataset.taskId)">
+							<span id="taskToggleIcon{{ task.id }}">+</span>
+							<span id="taskToggleText{{ task.id }}">Chi tiết</span>
+						</button>
+						<div>
+							<a href="{{ url_for('pages.task_assignment_edit_form', task_id=task.id) }}" class="btn btn-sm btn-outline-secondary">Chỉnh sửa</a>
+							<button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDelete({{ task.id }})">Xóa</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div id="taskDetailsContainer{{ task.id }}" class="collapse">
+				<div class="card-body">
+					<div class="row">
+						<div class="col-md-6">
+							<h6 class="text-primary">Giai đoạn đã trải qua:</h6>
+							{% if task.stage_info.completed_stages %}
+							<ul class="list-unstyled">
+								{% for stage in task.stage_info.completed_stages %}
+								<li class="mb-2">
+									<span class="badge bg-success me-2">✓</span>
+									<strong>{{ stage.stage }}</strong>
+									<br>
+									<small class="text-muted">
+										Người thực hiện: {{ stage.user }}
+										{% if stage.handover_to %}
+											{% if stage.user == stage.handover_to %}
+												→ <span class="text-primary">Tiếp tục đảm nhận</span>
+											{% else %}
+												→ Bàn giao cho: {{ stage.handover_to }}
+											{% endif %}
+										{% endif %}
+										<br>
+										Thời gian: {{ stage.date[:16] }}
+										{% if stage.note %}<br>Ghi chú: {{ stage.note }}{% endif %}
+									</small>
+								</li>
+								{% endfor %}
+							</ul>
+							{% else %}
+							<p class="text-muted">Chưa có giai đoạn nào được hoàn thành</p>
+							{% endif %}
+						</div>
+						<div class="col-md-6">
+							<h6 class="text-info">Giai đoạn hiện tại:</h6>
+							<div class="alert alert-info">
+								<strong>{{ task.stage_info.current_stage }}</strong>
+								<br>
+								<small>
+									Người thực hiện: {{ task.assigned_to }}<br>
+									Trạng thái: 
+									{% if task.status == 'pending' %}
+										<span class="badge bg-warning">Chờ xử lý</span>
+									{% elif task.status == 'in_progress' %}
+										<span class="badge bg-info">Đang xử lý</span>
+									{% elif task.status == 'completed' %}
+										<span class="badge bg-success">Hoàn thành</span>
+									{% endif %}
+								</small>
+							</div>
+							<div class="progress mb-2">
+								<div class="progress-bar" role="progressbar" 
+										 data-width="{{ task.stage_info.progress_percentage }}" 
+										 aria-valuenow="{{ task.stage_info.progress_percentage }}" 
+										 aria-valuemin="0" aria-valuemax="100">
+									{{ task.stage_info.progress_percentage|round|int }}%
+								</div>
+							</div>
+							<small class="text-muted">
+								Tiến độ: {{ task.stage_info.current_stage_index + 1 }}/{{ task.stage_info.total_stages + 1 }} giai đoạn
+							</small>
+						</div>
+					</div>
+					{% if task.description %}
+					<div class="row mt-3">
+						<div class="col-12">
+							<h6 class="text-secondary">Mô tả:</h6>
+							<p class="text-muted">{{ task.description }}</p>
+						</div>
+					</div>
+					{% endif %}
+					{% if task.note %}
+					<div class="row mt-2">
+						<div class="col-12">
+							<h6 class="text-secondary">Ghi chú:</h6>
+							<p class="text-muted">{{ task.note }}</p>
+						</div>
+					</div>
+					{% endif %}
+				</div>
+			</div>
 		</div>
+		{% endfor %}
 
 		<!-- Phân trang -->
 		{% if total_pages > 1 %}

@@ -1,0 +1,12 @@
+# Test file for upload feature
+This is a test file to verify the upload functionality works correctly.
+
+Test content:
+- File upload from homepage
+- File upload from My Tasks page
+- File upload from task detail page
+- File validation (size, type)
+- File categorization
+- File download and delete
+
+Created: 2025-01-21

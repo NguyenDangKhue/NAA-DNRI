@@ -222,12 +222,29 @@
 								
 								<!-- Bàn giao -->
 								{% if task.status == 'completed' %}
+								{% if task.can_handover %}
 								<a href="{{ url_for('pages.task_assignment_handover_form', task_id=task.id) }}" class="btn btn-sm btn-outline-info">
 									<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-1" viewBox="0 0 16 16">
 										<path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
 									</svg>
 									Bàn giao
 								</a>
+								{% elif task.is_workflow_completed %}
+								<span class="badge bg-success">Đã hoàn thành quy trình</span>
+								{% else %}
+								<span class="badge bg-info">Hoàn thành giai đoạn</span>
+								{% endif %}
+								{% endif %}
+								
+								<!-- Upload File -->
+								{% if task.status == 'completed' or task.status == 'in_progress' %}
+								<button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#uploadModal{{ task.id }}">
+									<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+										<path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+										<path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+									</svg>
+									Upload
+								</button>
 								{% endif %}
 								
 								<!-- Chỉnh sửa -->
@@ -284,5 +301,62 @@
 		{% endif %}
 	</div>
 </div>
+
+<!-- Upload File Modals -->
+{% for task in tasks %}
+{% if task.status == 'completed' or task.status == 'in_progress' %}
+<div class="modal fade" id="uploadModal{{ task.id }}" tabindex="-1" aria-labelledby="uploadModalLabel{{ task.id }}" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="uploadModalLabel{{ task.id }}">
+					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+						<path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+						<path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+					</svg>
+					Upload File - {{ task.title }}
+				</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<form method="POST" action="{{ url_for('pages.task_assignment_upload_file', task_id=task.id) }}" enctype="multipart/form-data">
+				<div class="modal-body">
+					<div class="mb-3">
+						<label class="form-label">Chọn công đoạn <span class="text-danger">*</span></label>
+						<select name="stage_name" class="form-select" required>
+							<option value="">-- Chọn công đoạn --</option>
+							<option value="Nhận mẫu">Nhận mẫu</option>
+							<option value="Đóng mẫu">Đóng mẫu</option>
+							<option value="Chiếu mẫu">Chiếu mẫu</option>
+							<option value="Xử lý số liệu">Xử lý số liệu</option>
+							<option value="Kiểm tra và duyệt kết quả">Kiểm tra và duyệt kết quả</option>
+							<option value="Lưu kết quả">Lưu kết quả</option>
+						</select>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Chọn file <span class="text-danger">*</span></label>
+						<input type="file" name="file" class="form-control" accept=".png,.jpg,.jpeg,.gif,.pdf,.doc,.docx,.xls,.xlsx,.csv,.json,.zip,.rar" required>
+						<div class="form-text">Hỗ trợ: Hình ảnh, PDF, Word, Excel, CSV, JSON, ZIP (tối đa 50MB)</div>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Mô tả file</label>
+						<input type="text" name="description" class="form-control" placeholder="Mô tả ngắn về file...">
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+					<button type="submit" class="btn btn-primary">
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+							<path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+							<path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+						</svg>
+						Upload File
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+{% endif %}
+{% endfor %}
 
 {% endblock %}

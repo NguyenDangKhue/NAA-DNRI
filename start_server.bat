@@ -1,19 +1,29 @@
 @echo off
-echo ========================================
-echo    KHOI DONG SERVER LAB MANAGE
-echo ========================================
-echo.
-echo Dang khoi dong server...
-echo.
-echo Sau khi khoi dong thanh cong, ban co the truy cap:
-echo - Tu may nay: http://localhost:5000
-echo - Tu may khac trong mang LAN: http://192.168.1.201:5000
-echo.
-echo Nhan Ctrl+C de dung server
-echo.
-echo ========================================
+echo ================================================
+echo 🚀 KHỞI ĐỘNG ỨNG DỤNG LAB MANAGEMENT
+echo ================================================
+echo 📁 Thư mục làm việc: %CD%
+echo 🌐 Server sẽ chạy tại: http://localhost:5000
+echo ⏹️  Nhấn Ctrl+C để dừng server
+echo ================================================
 echo.
 
-python -m app
+REM Kiểm tra Python có tồn tại không
+python --version >nul 2>&1
+if errorlevel 1 (
+    echo ❌ Python không được tìm thấy!
+    echo 💡 Hãy cài đặt Python và thêm vào PATH
+    pause
+    exit /b 1
+)
 
-pause
+REM Chạy ứng dụng
+python start_app.py
+
+REM Nếu có lỗi, hiển thị thông báo
+if errorlevel 1 (
+    echo.
+    echo ❌ Có lỗi xảy ra khi khởi động ứng dụng
+    echo 💡 Kiểm tra lại dependencies: pip install -r requirements.txt
+    pause
+)

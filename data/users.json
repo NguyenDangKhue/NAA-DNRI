@@ -180,6 +180,25 @@
         "customer_info"
       ],
       "active": true
+    },
+    {
+      "username": "test_user",
+      "password_hash": "scrypt:32768:8:1$d3KxuKF7ozSdwGHE$dc0f29c4962987508506c7d617d35c3820affa86dda6a254d2628f252763830eddef7cbce8134f9fce37979687670965ebbdbb5e5eb7f491f55a98699e5799ea",
+      "role": "user",
+      "permissions": [
+        "customers",
+        "receiving"
+      ],
+      "detailed_permissions": {
+        "users": "none",
+        "customers": "view",
+        "receiving": "view",
+        "closing": "none",
+        "irradiation": "none",
+        "task_assignment": "none"
+      },
+      "workflow_roles": [],
+      "active": true
     }
   ]
 }

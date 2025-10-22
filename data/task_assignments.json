@@ -2,26 +2,88 @@
   "task_assignments": [
     {
       "id": 1,
-      "title": "Nhập thông tin mẫu PT - Công đoạn 2: Đóng mẫu",
-      "description": "Có tổng 2 mẫu",
-      "assigned_to": "Nguyễn Đăng Khuê",
+      "title": "pt - Công đoạn 6: Lưu kết quả",
+      "description": "pt",
+      "assigned_to": "TTANH",
       "assigned_by": "TTANH",
-      "priority": "high",
-      "status": "pending",
-      "created_at": "2025-10-19 18:57:16",
-      "updated_at": "2025-10-19 18:58:13",
+      "priority": "medium",
+      "status": "completed",
+      "created_at": "2025-10-21 22:16:05",
+      "updated_at": "2025-10-21 22:17:16",
       "due_date": null,
       "category": null,
       "note": null,
       "handover_history": [
         {
-          "from_user": "CTNQUYNH",
+          "from_user": "Nguyễn Đăng Khuê",
           "to_user": "Nguyễn Đăng Khuê",
           "handover_note": "",
-          "handover_date": "2025-10-19 18:58:13"
+          "handover_date": "2025-10-21 22:16:21",
+          "is_self_handover": true
+        },
+        {
+          "from_user": "Nguyễn Đăng Khuê",
+          "to_user": "Nguyễn Đăng Khuê",
+          "handover_note": "",
+          "handover_date": "2025-10-21 22:16:29",
+          "is_self_handover": true
+        },
+        {
+          "from_user": "Nguyễn Đăng Khuê",
+          "to_user": "Nguyễn Đăng Khuê",
+          "handover_note": "",
+          "handover_date": "2025-10-21 22:16:36",
+          "is_self_handover": true
+        },
+        {
+          "from_user": "Nguyễn Đăng Khuê",
+          "to_user": "TTANH",
+          "handover_note": "",
+          "handover_date": "2025-10-21 22:16:45",
+          "is_self_handover": false
+        },
+        {
+          "from_user": "TTANH",
+          "to_user": "TTANH",
+          "handover_note": "",
+          "handover_date": "2025-10-21 22:17:16",
+          "is_self_handover": true
         }
       ],
-      "original_title": "Nhập thông tin mẫu PT",
+      "original_title": "pt",
+      "completion_note": "Đã hoàn thành toàn bộ quy trình",
+      "completed_at": "2025-10-21 22:17:16"
+    },
+    {
+      "id": 2,
+      "title": "pt2 - Công đoạn 3: Chiếu mẫu",
+      "description": "pt2",
+      "assigned_to": "Nguyễn Đăng Khuê",
+      "assigned_by": "TTANH",
+      "priority": "medium",
+      "status": "in_progress",
+      "created_at": "2025-10-21 22:27:42",
+      "updated_at": "2025-10-21 22:34:54",
+      "due_date": null,
+      "category": null,
+      "note": null,
+      "handover_history": [
+        {
+          "from_user": "Nguyễn Đăng Khuê",
+          "to_user": "Nguyễn Đăng Khuê",
+          "handover_note": "",
+          "handover_date": "2025-10-21 22:28:03",
+          "is_self_handover": true
+        },
+        {
+          "from_user": "Nguyễn Đăng Khuê",
+          "to_user": "Nguyễn Đăng Khuê",
+          "handover_note": "",
+          "handover_date": "2025-10-21 22:34:16",
+          "is_self_handover": true
+        }
+      ],
+      "original_title": "pt2",
       "completion_note": "Đã bàn giao từ người hoàn thành"
     }
   ]

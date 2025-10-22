@@ -66,32 +66,41 @@
 				<a class="navbar-brand lab-header text-start" href="{{ url_for('pages.index') }}">
 					PHÒNG NGHIÊN CỨU ỨNG DỤNG KỸ THUẬT HẠT NHÂN VÀ ĐỒNG VỊ
 				</a>
-				<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-					<span class="navbar-toggler-icon"></span>
-				</button>
-				<div class="collapse navbar-collapse w-100" id="navbarSupportedContent">
+				<div class="navbar-collapse w-100" id="navbarSupportedContent">
 					<ul class="navbar-nav me-auto mb-2 mb-lg-0">
 						<li class="nav-item">
 							<a class="nav-link btn btn-primary text-white px-3 ms-1" href="{{ url_for('pages.index') }}" style="font-weight: 500;">Trang chủ</a>
 						</li>
+						{% if has_permission('users') %}
 						<li class="nav-item">
 							<a class="nav-link btn btn-outline-light text-white px-3 ms-1" href="{{ url_for('pages.users_list') }}" style="font-weight: 500;">Người dùng</a>
 						</li>
+						{% endif %}
+						{% if has_permission('customers') %}
 						<li class="nav-item">
 							<a class="nav-link btn btn-outline-light text-white px-3 ms-1" href="{{ url_for('pages.customers_list') }}" style="font-weight: 500;">Khách hàng</a>
 						</li>
+						{% endif %}
+						{% if has_permission('receiving') %}
 						<li class="nav-item">
 							<a class="nav-link btn btn-outline-light text-white px-3 ms-1" href="{{ url_for('pages.samples_list') }}" style="font-weight: 500;">Nhận mẫu</a>
 						</li>
+						{% endif %}
+						{% if has_permission('closing') %}
 						<li class="nav-item">
 							<a class="nav-link btn btn-outline-light text-white px-3 ms-1" href="{{ url_for('pages.closing_index') }}" style="font-weight: 500;">Đóng mẫu</a>
 						</li>
+						{% endif %}
+						{% if has_permission('irradiation') %}
 						<li class="nav-item">
 							<a class="nav-link btn btn-outline-light text-white px-3 ms-1" href="{{ url_for('pages.irradiation_index') }}" style="font-weight: 500;">Chiếu mẫu</a>
 						</li>
+						{% endif %}
+						{% if has_permission('task_assignment') %}
 						<li class="nav-item">
 							<a class="nav-link btn btn-outline-light text-white px-3 ms-1" href="{{ url_for('pages.task_assignment_index') }}" style="font-weight: 500;">Giao việc</a>
 						</li>
+						{% endif %}
 					</ul>
 					<ul class="navbar-nav ms-auto">
 						{% if session.get('user_id') %}

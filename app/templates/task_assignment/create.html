@@ -33,15 +33,71 @@
 			<div class="card-body p-4">
 				<form method="POST" action="{{ url_for('pages.task_assignment_create') }}">
 					<div class="row g-3">
+						<!-- Loại công việc -->
 						<div class="col-12">
-							<label class="form-label">Tiêu đề công việc <span class="text-danger">*</span></label>
-							<input type="text" name="title" class="form-control" placeholder="Nhập tiêu đề công việc..." required>
+							<label class="form-label">Loại công việc <span class="text-danger">*</span></label>
+							<div class="row">
+								<div class="col-md-6">
+									<div class="form-check">
+										<input class="form-check-input" type="radio" name="task_type" id="new_task" value="new" checked onchange="toggleTaskType()">
+										<label class="form-check-label" for="new_task">
+											<strong>Tạo công việc mới</strong>
+											<small class="d-block text-muted">Tạo một công việc hoàn toàn mới</small>
+										</label>
+									</div>
+								</div>
+								<div class="col-md-6">
+									<div class="form-check">
+										<input class="form-check-input" type="radio" name="task_type" id="repeat_stage" value="repeat" onchange="toggleTaskType()">
+										<label class="form-check-label" for="repeat_stage">
+											<strong>Lặp lại công đoạn</strong>
+											<small class="d-block text-muted">Lặp lại một công đoạn cho công việc có sẵn</small>
+										</label>
+									</div>
+								</div>
+							</div>
 						</div>
+
+						<!-- Phần tạo công việc mới -->
+						<div id="newTaskSection">
+							<div class="col-12">
+								<label class="form-label">Tiêu đề công việc <span class="text-danger">*</span></label>
+								<input type="text" name="title" class="form-control" placeholder="Nhập tiêu đề công việc..." required>
+							</div>
 						
-						<div class="col-12">
-							<label class="form-label">Mô tả chi tiết <span class="text-danger">*</span></label>
-							<textarea name="description" class="form-control" rows="4" placeholder="Mô tả chi tiết về công việc cần thực hiện..." required></textarea>
+							<div class="col-12">
+								<label class="form-label">Mô tả chi tiết <span class="text-danger">*</span></label>
+								<textarea name="description" class="form-control" rows="4" placeholder="Mô tả chi tiết về công việc cần thực hiện..." required></textarea>
+							</div>
 						</div>
+
+						<!-- Phần lặp lại công đoạn -->
+						<div id="repeatStageSection" style="display: none;">
+							<div class="col-12">
+								<label class="form-label">Chọn công việc <span class="text-danger">*</span></label>
+								<select name="existing_task_id" class="form-select" onchange="loadTaskStages()">
+									<option value="">-- Chọn công việc để lặp lại công đoạn --</option>
+									{% for task in existing_tasks %}
+									<option value="{{ task.id }}">#{{ task.id }}: {{ task.title }}</option>
+									{% endfor %}
+								</select>
+							</div>
+							
+							<div class="col-12">
+								<label class="form-label">Chọn công đoạn cần lặp lại <span class="text-danger">*</span></label>
+								<select name="stage_to_repeat" class="form-select" disabled>
+									<option value="">-- Chọn công đoạn --</option>
+								</select>
+								<div class="form-text">Chọn công việc trước để hiển thị danh sách công đoạn</div>
+							</div>
+							
+							<div class="col-12">
+								<label class="form-label">Lý do lặp lại công đoạn</label>
+								<textarea name="repeat_reason" class="form-control" rows="3" placeholder="Mô tả lý do cần lặp lại công đoạn này..."></textarea>
+							</div>
+						</div>
+
+						<!-- Thông tin chung -->
 						
 						<div class="col-md-6">
 							<label class="form-label">Người được giao <span class="text-danger">*</span></label>
@@ -97,5 +153,65 @@
 		</div>
 	</div>
 </div>
+
+<script>
+function toggleTaskType() {
+	const newTaskRadio = document.getElementById('new_task');
+	const repeatStageRadio = document.getElementById('repeat_stage');
+	const newTaskSection = document.getElementById('newTaskSection');
+	const repeatStageSection = document.getElementById('repeatStageSection');
+	
+	if (newTaskRadio.checked) {
+		newTaskSection.style.display = 'block';
+		repeatStageSection.style.display = 'none';
+		// Reset validation
+		document.querySelector('input[name="title"]').required = true;
+		document.querySelector('textarea[name="description"]').required = true;
+		document.querySelector('select[name="existing_task_id"]').required = false;
+		document.querySelector('select[name="stage_to_repeat"]').required = false;
+	} else {
+		newTaskSection.style.display = 'none';
+		repeatStageSection.style.display = 'block';
+		// Reset validation
+		document.querySelector('input[name="title"]').required = false;
+		document.querySelector('textarea[name="description"]').required = false;
+		document.querySelector('select[name="existing_task_id"]').required = true;
+		document.querySelector('select[name="stage_to_repeat"]').required = true;
+	}
+}
+
+function loadTaskStages() {
+	const taskSelect = document.querySelector('select[name="existing_task_id"]');
+	const stageSelect = document.querySelector('select[name="stage_to_repeat"]');
+	
+	if (taskSelect.value) {
+		// Enable stage select
+		stageSelect.disabled = false;
+		
+		// Clear existing options
+		stageSelect.innerHTML = '<option value="">-- Chọn công đoạn --</option>';
+		
+		// Add stage options
+		const stages = [
+			{ value: 'nhan_mau', text: 'Nhận mẫu' },
+			{ value: 'dong_mau', text: 'Đóng mẫu' },
+			{ value: 'chieu_mau', text: 'Chiếu mẫu' },
+			{ value: 'xu_ly_so_lieu', text: 'Xử lý số liệu' },
+			{ value: 'kiem_tra_duyet', text: 'Kiểm tra và duyệt kết quả' }
+		];
+		
+		stages.forEach(stage => {
+			const option = document.createElement('option');
+			option.value = stage.value;
+			option.textContent = stage.text;
+			stageSelect.appendChild(option);
+		});
+	} else {
+		// Disable stage select
+		stageSelect.disabled = true;
+		stageSelect.innerHTML = '<option value="">-- Chọn công đoạn --</option>';
+	}
+}
+</script>
 
 {% endblock %}
